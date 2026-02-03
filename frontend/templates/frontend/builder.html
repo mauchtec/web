@@ -1,0 +1,215 @@
+{% extends "frontend/base.html" %}
+{% block title %}Workflow Builder{% endblock %}
+{% block head %}
+    <style>
+        .builder-container { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); padding: 32px; display: flex; gap: 32px; }
+        .component-list { width: 320px; background: #f9fafb; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .component-list h2 { font-size: 1.2rem; margin-bottom: 16px; color: #374151; }
+        .component-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; margin-bottom: 12px; cursor: grab; display: flex; align-items: center; gap: 12px; transition: box-shadow 0.2s; }
+        .component-item:hover { box-shadow: 0 2px 8px rgba(59,130,246,0.08); }
+        .component-icon { font-size: 1.3rem; }
+        .component-label { font-weight: 600; color: #1e293b; }
+        .canvas-area { flex: 1; min-height: 600px; background: #f3f4f6; border-radius: 10px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .canvas-dropzone { min-height: 400px; border: 2px dashed #a5b4fc; border-radius: 10px; background: #fff; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+        .canvas-dropzone.dragover { background: #e0e7ff; }
+        .canvas-step { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px; margin-bottom: 10px; position: relative; }
+        .canvas-step .remove-btn { position: absolute; top: 10px; right: 10px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 0.9rem; }
+        .canvas-step .remove-btn:hover { background: #fecaca; }
+        .preview-area { margin-top: 32px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); padding: 24px; }
+        .save-btn { margin-top: 24px; background: linear-gradient(135deg, #6366f1, #3b82f6); color: #fff; border: none; border-radius: 8px; padding: 14px 32px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .save-btn:hover { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+    </style>
+{% endblock %}
+{% block content %}
+<div class="builder-container">
+    <div class="component-list">
+        <h2 style="display:flex;align-items:center;justify-content:space-between;">
+            <span>Components</span>
+            <button id="reloadComponentsBtn" style="background:#e0e7ef;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:0.95em;">Reload</button>
+        </h2>
+        <div id="componentList"></div>
+        <div id="componentDebug" style="margin-top:18px;font-size:0.95em;color:#64748b;"></div>
+    </div>
+    <div class="canvas-area">
+        <h2>Workflow Canvas</h2>
+        <div id="canvasDropzone" class="canvas-dropzone"></div>
+        <button class="save-btn" onclick="saveWorkflow()">Save Workflow</button>
+        <div class="preview-area">
+            <h3>Live Preview</h3>
+            <div id="livePreview"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Fetch components from API
+async function fetchComponents() {
+    const res = await fetch('/api/v1/components/', { credentials: 'same-origin' });
+    const data = await res.json();
+    return data.components;
+}
+
+// Render component list
+function renderComponentList(components) {
+    const list = document.getElementById('componentList');
+    list.innerHTML = '';
+    components.forEach(comp => {
+        const item = document.createElement('div');
+        item.className = 'component-item';
+        item.draggable = true;
+        item.dataset.type = comp.type;
+        item.innerHTML = `<span class="component-icon">${comp.icon}</span> <span class="component-label">${comp.label}</span>`;
+        item.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('componentType', comp.type);
+        });
+        list.appendChild(item);
+    });
+    // Debug: show raw component types
+    document.getElementById('componentDebug').innerText = 'Fetched component types: ' + components.map(c => c.type).join(', ');
+}
+
+// Drag and drop logic
+const dropzone = document.getElementById('canvasDropzone');
+let workflowSteps = [];
+
+dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+});
+dropzone.addEventListener('dragleave', e => {
+    dropzone.classList.remove('dragover');
+});
+dropzone.addEventListener('drop', async e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const type = e.dataTransfer.getData('componentType');
+    const comp = (await fetchComponents()).find(c => c.type === type);
+    if (comp) {
+        const step = {
+            id: `${type}_${Math.random().toString(36).substr(2, 6)}`,
+            type: comp.type,
+            props: Object.fromEntries(comp.fields.map(f => [f.name, f.default || '']))
+        };
+        workflowSteps.push(step);
+        renderCanvas();
+        updatePreview();
+    }
+});
+
+function renderCanvas() {
+    dropzone.innerHTML = '';
+    workflowSteps.forEach((step, idx) => {
+        const div = document.createElement('div');
+        div.className = 'canvas-step';
+        div.innerHTML = `
+            <b>${step.type}</b>
+            <button class='remove-btn' onclick='removeStep(${idx})'>Remove</button>
+            <button style="margin-left:8px;" onclick='moveStep(${idx}, -1)' ${idx === 0 ? 'disabled' : ''} title="Move Up">&#8593;</button>
+            <button style="margin-left:4px;" onclick='moveStep(${idx}, 1)' ${idx === workflowSteps.length-1 ? 'disabled' : ''} title="Move Down">&#8595;</button>
+        `;
+        dropzone.appendChild(div);
+    });
+}
+
+function moveStep(idx, direction) {
+    const newIndex = idx + direction;
+    if (newIndex < 0 || newIndex >= workflowSteps.length) return;
+    const temp = workflowSteps[idx];
+    workflowSteps[idx] = workflowSteps[newIndex];
+    workflowSteps[newIndex] = temp;
+    renderCanvas();
+    updatePreview();
+}
+
+function removeStep(idx) {
+    workflowSteps.splice(idx, 1);
+    renderCanvas();
+    updatePreview();
+}
+
+async function updatePreview() {
+    const res = await fetch('/api/v1/preview/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ components: workflowSteps })
+    });
+    const data = await res.json();
+    document.getElementById('livePreview').innerHTML = data.html;
+}
+
+
+let currentWorkflowId = null;
+let currentWorkflowName = '';
+
+async function saveWorkflow() {
+    const definition = { steps: workflowSteps };
+    let url, method, payload;
+    if (currentWorkflowId) {
+        // Update existing workflow
+        url = `/api/v1/workflow/${currentWorkflowId}/`;
+        method = 'PUT';
+        payload = {
+            name: currentWorkflowName,
+            definition: definition
+        };
+    } else {
+        // Create new workflow
+        const name = prompt('Enter workflow name:');
+        if (!name) return;
+        url = '/api/v1/save/';
+        method = 'POST';
+        payload = {
+            name: name,
+            description: '',
+            version: '1.0.0',
+            status: 'draft',
+            definition: definition
+        };
+    }
+    const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.id) {
+        alert('Workflow saved! ID: ' + data.id);
+        window.location.hash = data.id;
+        currentWorkflowId = data.id;
+    } else {
+        alert('Save failed: ' + (data.error || 'Unknown error'));
+    }
+}
+
+async function loadWorkflow(id) {
+    const res = await fetch(`/api/v1/workflow/${id}/`, { credentials: 'same-origin' });
+    if (!res.ok) { alert('Workflow not found.'); return; }
+    const data = await res.json();
+    if (data.definition && data.definition.steps) {
+        workflowSteps = data.definition.steps;
+        currentWorkflowId = data.id;
+        currentWorkflowName = data.name;
+        renderCanvas();
+        updatePreview();
+    }
+}
+
+// Auto-load workflow if hash is present
+if (window.location.hash.length > 1) {
+    loadWorkflow(window.location.hash.substring(1));
+}
+
+// Init
+function loadAndRenderComponents() {
+    fetchComponents().then(renderComponentList);
+}
+loadAndRenderComponents();
+
+document.getElementById('reloadComponentsBtn').addEventListener('click', function() {
+    loadAndRenderComponents();
+});
+</script>
+{% endblock %}

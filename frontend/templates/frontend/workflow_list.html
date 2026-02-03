@@ -1,0 +1,131 @@
+{% extends "frontend/base.html" %}
+
+{% block title %}All Workflows{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/frontend/phone-preview.css">
+
+<div style="display: flex; gap: 36px; align-items: flex-start; max-width: 1300px; margin: 40px auto;">
+  <div style="flex: 1 1 0; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); padding: 32px;">
+    <h2 style="margin-bottom: 24px; color: #1e293b;">All Workflows</h2>
+    <table id="workflow-table" style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="background:#f3f4f6; color:#374151;">
+                <th style="padding:10px 8px; text-align:left;">Name</th>
+                <th style="padding:10px 8px; text-align:left;">Status</th>
+                <th style="padding:10px 8px; text-align:left;">Version</th>
+                <th style="padding:10px 8px; text-align:left;">Created</th>
+                <th style="padding:10px 8px; text-align:left;">Updated</th>
+                <th style="padding:10px 8px; text-align:left;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for wf in workflows %}
+            <tr class="workflow-row" data-id="{{ wf.id }}" style="border-bottom:1px solid #e5e7eb; cursor:pointer;">
+                <td style="padding:10px 8px;">{{ wf.name }}</td>
+                <td style="padding:10px 8px;">{{ wf.status|title }}</td>
+                <td style="padding:10px 8px;">{{ wf.version }}</td>
+                <td style="padding:10px 8px;">{{ wf.created_at|date:"Y-m-d H:i" }}</td>
+                <td style="padding:10px 8px;">{{ wf.updated_at|date:"Y-m-d H:i" }}</td>
+                <td style="padding:10px 8px; display:flex; gap:10px;">
+                    <a href="/builder/#{{ wf.id }}" style="color:#2563eb; font-weight:600;">Open</a>
+                    <button onclick="event.stopPropagation();publishWorkflow('{{ wf.id }}')" style="background:#d1fae5; color:#047857; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; font-size:0.95em;">Publish</button>
+                    <button onclick="event.stopPropagation();deleteWorkflow('{{ wf.id }}')" style="background:#fee2e2; color:#b91c1c; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; font-size:0.95em;">Delete</button>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" style="padding:18px; color:#64748b; text-align:center;">No workflows found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+  </div>
+  <div style="width: 360px; min-width: 360px;">
+    <div class="phone-preview" id="phone-preview">
+      <div class="phone-notch"></div>
+      <div class="phone-content" id="phone-content" style="text-align:center;color:#64748b;display:flex;align-items:center;justify-content:center;height:100%;">
+        <span>Select a workflow to preview</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+async function publishWorkflow(id) {
+    if (!confirm('Publish this workflow?')) return;
+    const res = await fetch(`/api/v1/workflow/${id}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'publish' })
+    });
+    const data = await res.json();
+    if (data.message) {
+        alert('Published!');
+        location.reload();
+    } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+    }
+}
+async function deleteWorkflow(id) {
+    if (!confirm('Delete this workflow?')) return;
+    const res = await fetch(`/api/v1/workflow/${id}/`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.message) {
+        alert('Deleted!');
+        location.reload();
+    } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+    }
+}
+
+// Highlight row and preview workflow
+const rows = document.querySelectorAll('.workflow-row');
+let selectedRow = null;
+rows.forEach(row => {
+  row.addEventListener('click', async function() {
+    if (selectedRow) selectedRow.style.background = '';
+    row.style.background = '#e0e7ef';
+    selectedRow = row;
+    const id = row.getAttribute('data-id');
+    document.getElementById('phone-content').innerHTML = '<span style="color:#64748b;">Loading preview...</span>';
+    // Fetch workflow definition
+    try {
+      const res = await fetch(`/api/v1/workflow/${id}/`);
+      const data = await res.json();
+      const definition = data && data.definition;
+      let components = null;
+      if (Array.isArray(definition?.components)) {
+        components = definition.components;
+      } else if (Array.isArray(definition?.steps)) {
+        components = definition.steps;
+      } else if (Array.isArray(definition?.nodes)) {
+        components = definition.nodes;
+      } else if (definition?.workflow && Array.isArray(definition.workflow.components)) {
+        components = definition.workflow.components;
+      }
+      if (!components) {
+        document.getElementById('phone-content').innerHTML = '<span style="color:#64748b;">Invalid workflow definition.</span>';
+        return;
+      }
+      // Preview via API
+      const previewRes = await fetch('/api/v1/preview/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ components })
+      });
+      if (!previewRes.ok) {
+        document.getElementById('phone-content').innerHTML = '<span style="color:#ef4444;">Preview failed.</span>';
+        return;
+      }
+      const previewData = await previewRes.json();
+      document.getElementById('phone-content').innerHTML = previewData.html || '<span style="color:#64748b;">No preview available.</span>';
+    } catch (e) {
+      document.getElementById('phone-content').innerHTML = '<span style="color:#ef4444;">Preview failed.</span>';
+    }
+  });
+});
+</script>
+{% endblock %}
+
