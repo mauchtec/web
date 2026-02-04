@@ -1,0 +1,33 @@
+{% extends "frontend/base.html" %}
+{% block title %}Property Details{% endblock %}
+{% block head %}
+<style>
+.gatecore-detail { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); padding: 40px 36px 32px 36px; border: 1.5px solid #e5e7eb; }
+.gatecore-detail h2 { color: #2563eb; font-size: 2rem; font-weight: 800; margin-bottom: 18px; }
+.gatecore-detail .label { color: #64748b; font-weight: 600; margin-top: 18px; margin-bottom: 2px; font-size: 1.08rem; }
+.gatecore-detail .value { color: #374151; font-size: 1.13rem; margin-bottom: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-detail">
+    <h2><i class="fa-solid fa-city"></i> {{ property.name }}</h2>
+    <div class="label">Type</div>
+    <div class="value">{{ property.get_property_type_display }}</div>
+    <div class="label">Site</div>
+    <div class="value"><a href="/frontend/gatecore/sites/{{ property.site.id }}/" style="color:#2563eb;font-weight:600;">{{ property.site.name }}</a></div>
+    <div class="label">Code</div>
+    <div class="value">{{ property.property_code }}</div>
+    <div class="label">Location</div>
+    <div class="value">{{ property.location }}</div>
+    <div class="label">Total Units</div>
+    <div class="value">{{ property.total_units }}</div>
+    <div class="label">Units</div>
+    <div class="value">
+        {% for unit in units %}
+            <a href="/frontend/gatecore/units/{{ unit.id }}/" style="color:#2563eb;font-weight:600;">{{ unit.unit_code }}</a>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No units found.</span>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

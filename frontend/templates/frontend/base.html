@@ -12,9 +12,18 @@
         .navbar { background: linear-gradient(90deg, #6366f1, #3b82f6); color: #fff; padding: 0 32px; height: 64px; display: flex; align-items: center; box-shadow: 0 4px 16px rgba(59,130,246,0.10); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
         .navbar .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1.5px; margin-right: 36px; display: flex; align-items: center; gap: 10px; }
         .navbar .logo img { height: 32px; width: 32px; border-radius: 8px; margin-right: 8px; }
-        .navbar .menu { display: flex; gap: 28px; }
-        .navbar .menu a { color: #fff; text-decoration: none; font-weight: 500; font-size: 1.05rem; transition: color 0.2s; padding: 4px 10px; border-radius: 6px; }
-        .navbar .menu a:hover { color: #dbeafe; background: rgba(99,102,241,0.12); }
+        .navbar .menu { display: flex; gap: 18px; align-items: center; }
+        .navbar .menu > a, .navbar .menu > .dropdown > .dropbtn { color: #fff; text-decoration: none; font-weight: 500; font-size: 1.05rem; transition: color 0.2s; padding: 4px 14px; border-radius: 6px; background: none; border: none; outline: none; cursor: pointer; display: flex; align-items: center; }
+        .navbar .menu > a:hover, .navbar .menu > .dropdown > .dropbtn:hover { color: #dbeafe; background: rgba(99,102,241,0.12); }
+        .dropdown { position: relative; }
+        .dropbtn { display: flex; align-items: center; gap: 4px; }
+        .dropdown-content { display: none; position: absolute; left: 0; top: 38px; background: #fff; min-width: 340px; box-shadow: 0 8px 32px rgba(59,130,246,0.13); border-radius: 12px; z-index: 100; padding: 18px 0 18px 0; border: 1.5px solid #e5e7eb; flex-direction: row; gap: 24px; }
+        .dropdown:hover .dropdown-content, .dropdown:focus-within .dropdown-content { display: flex; }
+        .dropdown-group { display: flex; flex-direction: column; min-width: 120px; margin: 0 10px; }
+        .dropdown-group span { font-size: 1.01em; color: #2563eb; font-weight: 700; margin-bottom: 8px; margin-top: 2px; letter-spacing: 0.5px; }
+        .dropdown-content a { color: #2563eb !important; background: none !important; font-weight: 500; border-radius: 5px; padding: 5px 10px; margin-bottom: 2px; font-size: 1.04em; transition: background 0.15s; text-decoration: none; }
+        .dropdown-content a:hover { background: #e0e7ff !important; color: #1e40af !important; }
+        .dropdown-group:not(:last-child) { border-right: 1px solid #e5e7eb; padding-right: 14px; }
         .navbar .user { margin-left: auto; font-size: 1.05rem; font-weight: 500; }
         .content { min-height: 80vh; padding-top: 24px; }
         .footer { background: linear-gradient(90deg, #e0e7ef, #f3f4f6); color: #64748b; text-align: center; padding: 22px 0; font-size: 1.05rem; border-top: 1px solid #e5e7eb; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-shadow: 0 -2px 8px rgba(99,102,241,0.04); }
@@ -30,6 +39,34 @@
         <div class="menu">
             <a href="/builder/">Builder</a>
             <a href="/workflows/">Workflows</a>
+            <div class="dropdown">
+                <button class="dropbtn">GateCore <i class="fa-solid fa-caret-down"></i></button>
+                <div class="dropdown-content">
+                    <div class="dropdown-group"><span>Core</span>
+                        <a href="/frontend/gatecore/sites/">Sites</a>
+                        <a href="/frontend/gatecore/properties/">Properties</a>
+                        <a href="/frontend/gatecore/units/">Units</a>
+                    </div>
+                    <div class="dropdown-group"><span>People</span>
+                        <a href="/frontend/gatecore/people/">People</a>
+                        <a href="/frontend/gatecore/vehicles/">Vehicles</a>
+                        <a href="/frontend/gatecore/guest-registrations/">Guests</a>
+                    </div>
+                    <div class="dropdown-group"><span>Access</span>
+                        <a href="/frontend/gatecore/access-points/">Access Points</a>
+                        <a href="/frontend/gatecore/access-devices/">Devices</a>
+                        <a href="/frontend/gatecore/access-credentials/">Credentials</a>
+                        <a href="/frontend/gatecore/schedule-rules/">Schedules</a>
+                        <a href="/frontend/gatecore/access-permissions/">Permissions</a>
+                    </div>
+                    <div class="dropdown-group"><span>Logs</span>
+                        <a href="/frontend/gatecore/access-logs/">Access Logs</a>
+                    </div>
+                    <div class="dropdown-group"><span>Security</span>
+                        <a href="/frontend/gatecore/blacklist/">Blacklist</a>
+                    </div>
+                </div>
+            </div>
             <a href="/admin/">Admin</a>
             <a href="/api/v1/components/" target="_blank">API</a>
         </div>

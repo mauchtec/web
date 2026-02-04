@@ -1,0 +1,25 @@
+{% extends "frontend/base.html" %}
+{% block title %}Blacklist Entry Details{% endblock %}
+{% block head %}
+<style>
+.gatecore-detail { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); padding: 40px 36px 32px 36px; border: 1.5px solid #e5e7eb; }
+.gatecore-detail h2 { color: #2563eb; font-size: 2rem; font-weight: 800; margin-bottom: 18px; }
+.gatecore-detail .label { color: #64748b; font-weight: 600; margin-top: 18px; margin-bottom: 2px; font-size: 1.08rem; }
+.gatecore-detail .value { color: #374151; font-size: 1.13rem; margin-bottom: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-detail">
+    <h2><i class="fa-solid fa-ban"></i> Blacklist Entry</h2>
+    <div class="label">Person</div>
+    <div class="value">{% if entry.person %}<a href="/frontend/gatecore/people/{{ entry.person.id }}/" style="color:#2563eb;font-weight:600;">{{ entry.person.full_name }}</a>{% else %}-{% endif %}</div>
+    <div class="label">Reason</div>
+    <div class="value">{{ entry.reason|default:"-" }}</div>
+    <div class="label">Start Date</div>
+    <div class="value">{{ entry.start_date|date:"Y-m-d" }}</div>
+    <div class="label">End Date</div>
+    <div class="value">{{ entry.end_date|date:"Y-m-d"|default:"-" }}</div>
+    <div class="label">Notes</div>
+    <div class="value">{{ entry.notes|default:"-" }}</div>
+</div>
+{% endblock %}

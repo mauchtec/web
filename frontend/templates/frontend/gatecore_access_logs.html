@@ -1,0 +1,39 @@
+{% extends "frontend/base.html" %}
+{% block title %}Access Logs{% endblock %}
+{% block head %}
+<style>
+.gatecore-table { width: 100%; border-collapse: collapse; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); border: 1.5px solid #e5e7eb; }
+.gatecore-table th, .gatecore-table td { padding: 14px 18px; text-align: left; }
+.gatecore-table th { background: #2563eb; color: #fff; font-weight: 700; font-size: 1.08rem; }
+.gatecore-table tr:nth-child(even) { background: #f3f6fa; }
+.gatecore-table tr:hover { background: #e0e7ff; }
+.gatecore-table td a { color: #2563eb; font-weight: 600; text-decoration: none; }
+</style>
+{% endblock %}
+{% block content %}
+<h2 style="margin-top:32px;margin-bottom:18px;font-size:2rem;font-weight:800;color:#2563eb;"><i class="fa-solid fa-clipboard-list"></i> Access Logs</h2>
+<table class="gatecore-table">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Access Point</th>
+            <th>Person</th>
+            <th>Credential</th>
+            <th>Result</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for log in logs %}
+        <tr>
+            <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+            <td><a href="/frontend/gatecore/access-points/{{ log.access_point.id }}/">{{ log.access_point.name }}</a></td>
+            <td>{% if log.person %}<a href="/frontend/gatecore/people/{{ log.person.id }}/">{{ log.person.full_name }}</a>{% else %}-{% endif %}</td>
+            <td>{% if log.credential %}<a href="/frontend/gatecore/access-credentials/{{ log.credential.id }}/">{{ log.credential.credential_code }}</a>{% else %}-{% endif %}</td>
+            <td>{{ log.get_result_display }}</td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:#64748b;">No logs found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

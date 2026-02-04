@@ -1,0 +1,46 @@
+{% extends "frontend/base.html" %}
+{% block title %}GateCore Units{% endblock %}
+{% block head %}
+<style>
+.gatecore-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); margin: 40px auto 0 auto; max-width: 1200px; overflow: hidden; }
+.gatecore-table th, .gatecore-table td { padding: 14px 12px; text-align: left; }
+.gatecore-table th { background: #f3f4f6; color: #374151; font-size: 1.08rem; font-weight: 700; border-bottom: 2px solid #e5e7eb; }
+.gatecore-table tr { border-bottom: 1px solid #e5e7eb; }
+.gatecore-table tr:last-child { border-bottom: none; }
+.gatecore-table td { color: #374151; font-size: 1.05rem; }
+.gatecore-table tr:hover { background: #f1f5f9; }
+.gatecore-table a { color: #2563eb; text-decoration: none; font-weight: 600; }
+.gatecore-table a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+{% block content %}
+<h2 style="max-width:1200px;margin:40px auto 0 auto;color:#2563eb;font-size:2rem;font-weight:800;">GateCore Units</h2>
+<table class="gatecore-table">
+    <thead>
+        <tr>
+            <th>Unit Code</th>
+            <th>Type</th>
+            <th>Property</th>
+            <th>Floor</th>
+            <th>Status</th>
+            <th>Area (sqft)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for unit in units %}
+        <tr>
+            <td>{{ unit.unit_code }}</td>
+            <td>{{ unit.get_unit_type_display }}</td>
+            <td><a href="/frontend/gatecore/properties/{{ unit.property.id }}/">{{ unit.property.name }}</a></td>
+            <td>{{ unit.floor }}</td>
+            <td>{{ unit.get_status_display }}</td>
+            <td>{{ unit.area_sqft }}</td>
+            <td><a href="/frontend/gatecore/units/{{ unit.id }}/">Details</a></td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:#64748b;">No units found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

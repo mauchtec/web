@@ -35,6 +35,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('api/v1/', include('workflows.urls')),
     path('builder/', include('frontend.urls')),
+    path('frontend/', include('frontend.urls')),
     path('workflows/', include('frontend.urls_workflows')),
     path('api/gatecore/', include('GateCore.urls')),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

@@ -1,0 +1,25 @@
+{% extends "frontend/base.html" %}
+{% block title %}Guest Registration Details{% endblock %}
+{% block head %}
+<style>
+.gatecore-detail { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); padding: 40px 36px 32px 36px; border: 1.5px solid #e5e7eb; }
+.gatecore-detail h2 { color: #2563eb; font-size: 2rem; font-weight: 800; margin-bottom: 18px; }
+.gatecore-detail .label { color: #64748b; font-weight: 600; margin-top: 18px; margin-bottom: 2px; font-size: 1.08rem; }
+.gatecore-detail .value { color: #374151; font-size: 1.13rem; margin-bottom: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-detail">
+    <h2><i class="fa-solid fa-user-plus"></i> {{ guest.guest_name }}</h2>
+    <div class="label">Person</div>
+    <div class="value">{% if guest.person %}<a href="/frontend/gatecore/people/{{ guest.person.id }}/" style="color:#2563eb;font-weight:600;">{{ guest.person.full_name }}</a>{% else %}-{% endif %}</div>
+    <div class="label">Unit</div>
+    <div class="value">{% if guest.unit %}<a href="/frontend/gatecore/units/{{ guest.unit.id }}/" style="color:#2563eb;font-weight:600;">{{ guest.unit.name }}</a>{% else %}-{% endif %}</div>
+    <div class="label">Check In</div>
+    <div class="value">{{ guest.check_in|date:"Y-m-d H:i" }}</div>
+    <div class="label">Check Out</div>
+    <div class="value">{{ guest.check_out|date:"Y-m-d H:i"|default:"-" }}</div>
+    <div class="label">Notes</div>
+    <div class="value">{{ guest.notes|default:"-" }}</div>
+</div>
+{% endblock %}

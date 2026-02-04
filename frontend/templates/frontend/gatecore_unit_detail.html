@@ -1,0 +1,39 @@
+{% extends "frontend/base.html" %}
+{% block title %}Unit Details{% endblock %}
+{% block head %}
+<style>
+.gatecore-detail { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); padding: 40px 36px 32px 36px; border: 1.5px solid #e5e7eb; }
+.gatecore-detail h2 { color: #2563eb; font-size: 2rem; font-weight: 800; margin-bottom: 18px; }
+.gatecore-detail .label { color: #64748b; font-weight: 600; margin-top: 18px; margin-bottom: 2px; font-size: 1.08rem; }
+.gatecore-detail .value { color: #374151; font-size: 1.13rem; margin-bottom: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-detail">
+    <h2><i class="fa-solid fa-door-open"></i> {{ unit.unit_code }}</h2>
+    <div class="label">Type</div>
+    <div class="value">{{ unit.get_unit_type_display }}</div>
+    <div class="label">Property</div>
+    <div class="value"><a href="/frontend/gatecore/properties/{{ unit.property.id }}/" style="color:#2563eb;font-weight:600;">{{ unit.property.name }}</a></div>
+    <div class="label">Floor</div>
+    <div class="value">{{ unit.floor }}</div>
+    <div class="label">Status</div>
+    <div class="value">{{ unit.get_status_display }}</div>
+    <div class="label">Area (sqft)</div>
+    <div class="value">{{ unit.area_sqft }}</div>
+    <div class="label">Bedrooms</div>
+    <div class="value">{{ unit.bedrooms }}</div>
+    <div class="label">Bathrooms</div>
+    <div class="value">{{ unit.bathrooms }}</div>
+    <div class="label">Has Parking</div>
+    <div class="value">{{ unit.has_parking|yesno:"Yes,No" }}</div>
+    <div class="label">Occupancies</div>
+    <div class="value">
+        {% for occ in occupancies %}
+            <span style="color:#2563eb;font-weight:600;">{{ occ.person.full_name }} ({{ occ.get_role_display }})</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No occupancies found.</span>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

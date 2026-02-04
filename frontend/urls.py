@@ -1,6 +1,30 @@
+
 from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('gatecore/people/', views.gatecore_people, name='gatecore_people'),
+    path('gatecore/people/<uuid:person_id>/', views.gatecore_person_detail, name='gatecore_person_detail'),
     path('', views.frontend_index, name='frontend_index'),
+    path('gatecore/', views.gatecore_dashboard, name='gatecore_dashboard'),
+    path('gatecore/sites/', views.gatecore_sites, name='gatecore_sites'),
+    path('gatecore/sites/<uuid:site_id>/', views.gatecore_site_detail, name='gatecore_site_detail'),
+    path('gatecore/vehicles/', views.gatecore_vehicles, name='gatecore_vehicles'),
+    path('gatecore/vehicles/<int:vehicle_id>/', views.gatecore_vehicle_detail, name='gatecore_vehicle_detail'),
+    path('gatecore/access-points/', views.gatecore_access_points, name='gatecore_access_points'),
+    path('gatecore/access-points/<uuid:access_point_id>/', views.gatecore_access_point_detail, name='gatecore_access_point_detail'),
+    path('gatecore/access-devices/', views.gatecore_access_devices, name='gatecore_access_devices'),
+    path('gatecore/access-devices/<uuid:device_id>/', views.gatecore_access_device_detail, name='gatecore_access_device_detail'),
+    path('gatecore/access-credentials/', views.gatecore_access_credentials, name='gatecore_access_credentials'),
+    path('gatecore/access-credentials/<uuid:credential_id>/', views.gatecore_access_credential_detail, name='gatecore_access_credential_detail'),
+    path('gatecore/access-logs/', views.gatecore_access_logs, name='gatecore_access_logs'),
+    path('gatecore/access-logs/<uuid:log_id>/', views.gatecore_access_log_detail, name='gatecore_access_log_detail'),
+    path('gatecore/guest-registrations/', views.gatecore_guest_registrations, name='gatecore_guest_registrations'),
+    path('gatecore/guest-registrations/<uuid:guest_id>/', views.gatecore_guest_registration_detail, name='gatecore_guest_registration_detail'),
+    path('gatecore/schedule-rules/', views.gatecore_schedule_rules, name='gatecore_schedule_rules'),
+    path('gatecore/schedule-rules/<uuid:rule_id>/', views.gatecore_schedule_rule_detail, name='gatecore_schedule_rule_detail'),
+    path('gatecore/access-permissions/', views.gatecore_access_permissions, name='gatecore_access_permissions'),
+    path('gatecore/access-permissions/<uuid:perm_id>/', views.gatecore_access_permission_detail, name='gatecore_access_permission_detail'),
+    path('gatecore/blacklist/', views.gatecore_blacklist, name='gatecore_blacklist'),
+    path('gatecore/blacklist/<uuid:entry_id>/', views.gatecore_blacklist_detail, name='gatecore_blacklist_detail'),
 ]

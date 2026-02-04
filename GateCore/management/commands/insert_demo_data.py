@@ -119,12 +119,12 @@ class Command(BaseCommand):
 
         # --- Demo People ---
         people_data = [
-            {'first_name': 'John', 'last_name': 'Doe', 'phone': '+12345678901', 'email': 'john.doe@example.com', 'gender': 'M'},
-            {'first_name': 'Jane', 'last_name': 'Smith', 'phone': '+12345678902', 'email': 'jane.smith@example.com', 'gender': 'F'},
-            {'first_name': 'Alice', 'last_name': 'Brown', 'phone': '+12345678903', 'email': 'alice.brown@example.com', 'gender': 'F'},
-            {'first_name': 'Bob', 'last_name': 'Contractor', 'phone': '+12345678904', 'email': 'bob.contractor@example.com', 'gender': 'M'},
-            {'first_name': 'Eve', 'last_name': 'Guest', 'phone': '+12345678905', 'email': 'eve.guest@example.com', 'gender': 'F'},
-            {'first_name': 'Mallory', 'last_name': 'Employee', 'phone': '+12345678906', 'email': 'mallory.employee@example.com', 'gender': 'O'},
+            {'first_name': 'John', 'last_name': 'Doe', 'phone': '+12345678901', 'email': 'john.doe@example.com', 'gender': 'M', 'phone_device_type': 'android', 'phone_otp': '123456', 'phone_otp_created': None, 'facial_recognition_enabled': True},
+            {'first_name': 'Jane', 'last_name': 'Smith', 'phone': '+12345678902', 'email': 'jane.smith@example.com', 'gender': 'F', 'phone_device_type': 'ios', 'phone_otp': '654321', 'phone_otp_created': None, 'facial_recognition_enabled': False},
+            {'first_name': 'Alice', 'last_name': 'Brown', 'phone': '+12345678903', 'email': 'alice.brown@example.com', 'gender': 'F', 'phone_device_type': 'feature', 'phone_otp': '111222', 'phone_otp_created': None, 'facial_recognition_enabled': True},
+            {'first_name': 'Bob', 'last_name': 'Contractor', 'phone': '+12345678904', 'email': 'bob.contractor@example.com', 'gender': 'M', 'phone_device_type': 'android', 'phone_otp': '333444', 'phone_otp_created': None, 'facial_recognition_enabled': False},
+            {'first_name': 'Eve', 'last_name': 'Guest', 'phone': '+12345678905', 'email': 'eve.guest@example.com', 'gender': 'F', 'phone_device_type': 'other', 'phone_otp': '555666', 'phone_otp_created': None, 'facial_recognition_enabled': True},
+            {'first_name': 'Mallory', 'last_name': 'Employee', 'phone': '+12345678906', 'email': 'mallory.employee@example.com', 'gender': 'O', 'phone_device_type': 'ios', 'phone_otp': '777888', 'phone_otp_created': None, 'facial_recognition_enabled': False},
         ]
         people = []
         for pdata in people_data:

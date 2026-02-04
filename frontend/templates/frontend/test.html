@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Filterable Data Table</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 25px 30px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .global-search-container {
+            position: relative;
+            flex-grow: 1;
+            max-width: 400px;
+        }
+
+        .global-search {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: white;
+        }
+
+        .global-search:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .global-search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        thead {
+            background-color: #f1f5f9;
+        }
+
+        th {
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            position: relative;
+            user-select: none;
+        }
+
+        .filterable-header {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .filterable-header:hover {
+            background-color: #e2e8f0;
+        }
+
+        .filterable-header.active {
+            background-color: #e0e7ff;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-icon {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-left: 8px;
+        }
+
+        .filter-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 220px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            padding: 15px;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .filter-dropdown.active {
+            display: block;
+        }
+
+        .filter-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #475569;
+        }
+
+        .filter-search {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .filter-options {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .filter-option input {
+            margin-right: 8px;
+        }
+
+        .filter-option label {
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .filter-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .apply-btn {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .apply-btn:hover {
+            background-color: #4338ca;
+        }
+
+        .reset-btn {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+
+        .reset-btn:hover {
+            background-color: #e2e8f0;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        td {
+            padding: 16px 15px;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status.active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .footer-info {
+            padding: 20px 30px;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .record-count {
+            font-weight: 600;
+            color: #4f46e5;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .global-search-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Professional Data Table</h1>
+            <p class="subtitle">Interactive table with column filters and search functionality</p>
+        </header>
+        
+        <div class="controls">
+            <div class="global-search-container">
+                <i class="fas fa-search global-search-icon"></i>
+                <input type="text" id="globalSearch" class="global-search" placeholder="Search across all columns...">
+            </div>
+            <div>
+                <button id="resetAllFilters" class="filter-btn reset-btn">
+                    <i class="fas fa-redo"></i> Reset All Filters
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="filterable-header" data-column="id">
+                            <div class="header-content">
+                                <span>ID</span>
+                                <i class="fas fa-filter filter-icon"></i>
+                            </div>
+                            <div class="filter-dropdown">
+                                <div class="filter-title">Filter by ID</div>
+                                <input type="text" class="filter-search" placeholder="Search IDs...">
+                                <div class="filter-options" id="id-options"></div>
+                                <div class="filter-actions">
+                                    <button class="filter-btn reset-btn" data-reset="id">Reset</button>
+                                    <button class="filter-btn apply-btn" data-apply="id">Apply</button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="filterable-header" data-column="name">
+                            <div class="header-content">
+                                <span>Name</span>
+                                <i class="fas fa-filter filter-icon"></i>
+                            </div>
+                            <div class="filter-dropdown">
+                                <div class="filter-title">Filter by Name</div>
+                                <input type="text" class="filter-search" placeholder="Search names...">
+                                <div class="filter-options" id="name-options"></div>
+                                <div class="filter-actions">
+                                    <button class="filter-btn reset-btn" data-reset="name">Reset</button>
+                                    <button class="filter-btn apply-btn" data-apply="name">Apply</button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="filterable-header" data-column="department">
+                            <div class="header-content">
+                                <span>Department</span>
+                                <i class="fas fa-filter filter-icon"></i>
+                            </div>
+                            <div class="filter-dropdown">
+                                <div class="filter-title">Filter by Department</div>
+                                <input type="text" class="filter-search" placeholder="Search departments...">
+                                <div class="filter-options" id="department-options"></div>
+                                <div class="filter-actions">
+                                    <button class="filter-btn reset-btn" data-reset="department">Reset</button>
+                                    <button class="filter-btn apply-btn" data-apply="department">Apply</button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="filterable-header" data-column="role">
+                            <div class="header-content">
+                                <span>Role</span>
+                                <i class="fas fa-filter filter-icon"></i>
+                            </div>
+                            <div class="filter-dropdown">
+                                <div class="filter-title">Filter by Role</div>
+                                <input type="text" class="filter-search" placeholder="Search roles...">
+                                <div class="filter-options" id="role-options"></div>
+                                <div class="filter-actions">
+                                    <button class="filter-btn reset-btn" data-reset="role">Reset</button>
+                                    <button class="filter-btn apply-btn" data-apply="role">Apply</button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="filterable-header" data-column="status">
+                            <div class="header-content">
+                                <span>Status</span>
+                                <i class="fas fa-filter filter-icon"></i>
+                            </div>
+                            <div class="filter-dropdown">
+                                <div class="filter-title">Filter by Status</div>
+                                <input type="text" class="filter-search" placeholder="Search statuses...">
+                                <div class="filter-options" id="status-options"></div>
+                                <div class="filter-actions">
+                                    <button class="filter-btn reset-btn" data-reset="status">Reset</button>
+                                    <button class="filter-btn apply-btn" data-apply="status">Apply</button>
+                                </div>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Table data will be populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="no-results" id="noResults">
+                <i class="fas fa-search fa-2x" style="margin-bottom: 15px;"></i>
+                <h3>No results found</h3>
+                <p>Try adjusting your search or filters to find what you're looking for.</p>
+            </div>
+        </div>
+        
+        <div class="footer-info">
+            <div>Showing <span class="record-count" id="visibleCount">0</span> of <span class="record-count" id="totalCount">0</span> records</div>
+            <div>Professional Data Table v1.0</div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for the table
+        const tableData = [
+            { id: 1001, name: "Alex Johnson", department: "Engineering", role: "Software Engineer", status: "active" },
+            { id: 1002, name: "Maria Garcia", department: "Marketing", role: "Marketing Manager", status: "active" },
+               ];
+
+        // Global variables
+        let activeFilters = {
+            id: [],
+            name: [],
+            department: [],
+            role: [],
+            status: []
+        };
+        
+        let globalSearchTerm = '';
+        let activeDropdown = null;
+
+        // Initialize the table
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable(tableData);
+            populateFilterOptions();
+            updateRecordCount();
+            
+            // Event listeners for filterable headers
+            document.querySelectorAll('.filterable-header').forEach(header => {
+                header.addEventListener('click', function(e) {
+                    // Don't trigger if clicking inside the dropdown
+                    if (e.target.closest('.filter-dropdown')) return;
+                    
+                    const column = this.getAttribute('data-column');
+                    toggleFilterDropdown(column);
+                });
+            });
+            
+            // Global search input
+            document.getElementById('globalSearch').addEventListener('input', function() {
+                globalSearchTerm = this.value.toLowerCase().trim();
+                filterTable();
+            });
+            
+            // Reset all filters button
+            document.getElementById('resetAllFilters').addEventListener('click', resetAllFilters);
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (activeDropdown && !e.target.closest('.filter-dropdown') && !e.target.closest('.filterable-header.active')) {
+                    closeActiveDropdown();
+                }
+            });
+        });
+
+        // Render table with data
+        function renderTable(data) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                document.getElementById('noResults').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('noResults').style.display = 'none';
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.department}</td>
+                    <td>${item.role}</td>
+                    <td><span class="status ${item.status}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Populate filter options from data
+        function populateFilterOptions() {
+            // Get unique values for each column
+            const columns = ['id', 'name', 'department', 'role', 'status'];
+            
+            columns.forEach(column => {
+                const optionsContainer = document.getElementById(`${column}-options`);
+                const uniqueValues = [...new Set(tableData.map(item => item[column]))];
+                
+                // Clear existing options
+                optionsContainer.innerHTML = '';
+                
+                // Create checkbox for each unique value
+                uniqueValues.forEach(value => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'filter-option';
+                    optionDiv.innerHTML = `
+                        <input type="checkbox" id="${column}-${value}" value="${value}">
+                        <label for="${column}-${value}">${value}</label>
+                    `;
+                    optionsContainer.appendChild(optionDiv);
+                });
+                
+                // Add event listeners for filter search
+                const filterSearch = optionsContainer.parentElement.querySelector('.filter-search');
+                filterSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const options = optionsContainer.querySelectorAll('.filter-option');
+                    
+                    options.forEach(option => {
+                        const label = option.querySelector('label').textContent.toLowerCase();
+                        option.style.display = label.includes(searchTerm) ? 'flex' : 'none';
+                    });
+                });
+                
+                // Add event listeners for apply and reset buttons
+                const applyBtn = optionsContainer.parentElement.querySelector('.apply-btn');
+                const resetBtn = optionsContainer.parentElement.querySelector('.reset-btn');
+                
+                applyBtn.addEventListener('click', function() {
+                    applyColumnFilter(column);
+                });
+                
+                resetBtn.addEventListener('click', function() {
+                    resetColumnFilter(column);
+                });
+            });
+        }
+
+        // Toggle filter dropdown
+        function toggleFilterDropdown(column) {
+            closeActiveDropdown();
+            
+            const header = document.querySelector(`.filterable-header[data-column="${column}"]`);
+            const dropdown = header.querySelector('.filter-dropdown');
+            
+            header.classList.add('active');
+            dropdown.classList.add('active');
+            activeDropdown = column;
+            
+            // Pre-check already selected filters
+            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = activeFilters[column].includes(checkbox.value);
+            });
+        }
+
+        // Close active dropdown
+        function closeActiveDropdown() {
+            if (activeDropdown) {
+                const header = document.querySelector(`.filterable-header[data-column="${activeDropdown}"]`);
+                const dropdown = header.querySelector('.filter-dropdown');
+                
+                header.classList.remove('active');
+                dropdown.classList.remove('active');
+                activeDropdown = null;
+            }
+        }
+
+        // Apply filter for a specific column
+        function applyColumnFilter(column) {
+            const dropdown = document.querySelector(`.filterable-header[data-column="${column}"] .filter-dropdown`);
+            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+            
+            activeFilters[column] = Array.from(checkboxes).map(cb => cb.value);
+            closeActiveDropdown();
+            filterTable();
+        }
+
+        // Reset filter for a specific column
+        function resetColumnFilter(column) {
+            activeFilters[column] = [];
+            
+            // Uncheck all checkboxes in the dropdown
+            const dropdown = document.querySelector(`.filterable-header[data-column="${column}"] .filter-dropdown`);
+            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            
+            // Clear filter search
+            dropdown.querySelector('.filter-search').value = '';
+            
+            // Show all options
+            const options = dropdown.querySelectorAll('.filter-option');
+            options.forEach(option => option.style.display = 'flex');
+            
+            filterTable();
+        }
+
+        // Reset all filters
+        function resetAllFilters() {
+            // Reset active filters
+            Object.keys(activeFilters).forEach(key => {
+                activeFilters[key] = [];
+            });
+            
+            // Reset global search
+            document.getElementById('globalSearch').value = '';
+            globalSearchTerm = '';
+            
+            // Reset all dropdowns
+            document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+                const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => checkbox.checked = false);
+                
+                // Clear filter search
+                dropdown.querySelector('.filter-search').value = '';
+                
+                // Show all options
+                const options = dropdown.querySelectorAll('.filter-option');
+                options.forEach(option => option.style.display = 'flex');
+            });
+            
+            // Close active dropdown
+            closeActiveDropdown();
+            
+            // Re-render table
+            filterTable();
+        }
+
+        // Filter table based on active filters and search
+        function filterTable() {
+            let filteredData = tableData;
+            
+            // Apply column filters
+            Object.keys(activeFilters).forEach(column => {
+                if (activeFilters[column].length > 0) {
+                    filteredData = filteredData.filter(item => 
+                        activeFilters[column].includes(String(item[column]))
+                    );
+                }
+            });
+            
+            // Apply global search
+            if (globalSearchTerm) {
+                filteredData = filteredData.filter(item => {
+                    return Object.values(item).some(value => 
+                        String(value).toLowerCase().includes(globalSearchTerm)
+                    );
+                });
+            }
+            
+            // Render filtered data
+            renderTable(filteredData);
+            updateRecordCount(filteredData.length);
+        }
+
+        // Update record count
+        function updateRecordCount(visibleCount = null) {
+            const totalCount = tableData.length;
+            const visible = visibleCount !== null ? visibleCount : totalCount;
+            
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('visibleCount').textContent = visible;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{% extends "frontend/base.html" %}
+{% block title %}GateCore Vehicles{% endblock %}
+{% block head %}
+<style>
+.gatecore-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); margin: 40px auto 0 auto; max-width: 1200px; overflow: hidden; }
+.gatecore-table th, .gatecore-table td { padding: 14px 12px; text-align: left; }
+.gatecore-table th { background: #f3f4f6; color: #374151; font-size: 1.08rem; font-weight: 700; border-bottom: 2px solid #e5e7eb; }
+.gatecore-table tr { border-bottom: 1px solid #e5e7eb; }
+.gatecore-table tr:last-child { border-bottom: none; }
+.gatecore-table td { color: #374151; font-size: 1.05rem; }
+.gatecore-table tr:hover { background: #f1f5f9; }
+.gatecore-table a { color: #2563eb; text-decoration: none; font-weight: 600; }
+.gatecore-table a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+{% block content %}
+<h2 style="max-width:1200px;margin:40px auto 0 auto;color:#2563eb;font-size:2rem;font-weight:800;">GateCore Vehicles</h2>
+<table class="gatecore-table">
+    <thead>
+        <tr>
+            <th>License Plate</th>
+            <th>Type</th>
+            <th>Owner</th>
+            <th>Make</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Year</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for vehicle in vehicles %}
+        <tr>
+            <td>{{ vehicle.license_plate }}</td>
+            <td>{{ vehicle.get_vehicle_type_display }}</td>
+            <td><a href="/frontend/gatecore/people/{{ vehicle.person.id }}/">{{ vehicle.person.full_name }}</a></td>
+            <td>{{ vehicle.make }}</td>
+            <td>{{ vehicle.model }}</td>
+            <td>{{ vehicle.color }}</td>
+            <td>{{ vehicle.year }}</td>
+            <td><a href="/frontend/gatecore/vehicles/{{ vehicle.id }}/">Details</a></td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="8" style="text-align:center;color:#64748b;">No vehicles found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

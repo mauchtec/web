@@ -1,0 +1,116 @@
+{% extends "frontend/base.html" %}
+{% block title %}GateCore People{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+h2 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+.subtitle { font-size: 16px; opacity: 0.9; }
+.controls { padding: 25px 30px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+.global-search-container { position: relative; flex-grow: 1; max-width: 400px; }
+.global-search { width: 100%; padding: 12px 20px 12px 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; background: #fff; }
+.global-search:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.global-search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; }
+.table-container { padding: 30px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
+thead { background-color: #f1f5f9; }
+th { padding: 18px 15px; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; position: relative; user-select: none; }
+.filterable-header { cursor: pointer; transition: background-color 0.2s; }
+.filterable-header:hover { background-color: #e2e8f0; }
+.filterable-header.active { background-color: #e0e7ff; }
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.filter-icon { color: #94a3b8; font-size: 14px; margin-left: 8px; }
+.filter-dropdown { position: absolute; top: 100%; left: 0; width: 220px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 100; padding: 15px; display: none; margin-top: 5px; }
+.filter-dropdown.active { display: block; }
+.filter-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #475569; }
+.filter-search { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-bottom: 12px; font-size: 14px; }
+.filter-options { max-height: 200px; overflow-y: auto; margin-bottom: 15px; }
+.filter-option { display: flex; align-items: center; margin-bottom: 8px; }
+.filter-option input { margin-right: 8px; }
+.filter-option label { font-size: 14px; cursor: pointer; }
+.filter-actions { display: flex; justify-content: space-between; }
+.filter-btn { padding: 8px 15px; border: none; border-radius: 5px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.apply-btn { background: #2563eb; color: #fff; }
+.apply-btn:hover { background: #1d4ed8; }
+.reset-btn { background: #f1f5f9; color: #64748b; }
+.reset-btn:hover { background: #e2e8f0; }
+tbody tr { border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s; }
+tbody tr:hover { background: #f8fafc; }
+td { padding: 16px 15px; }
+.footer-info { padding: 20px 30px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #64748b; }
+.record-count { font-weight: 600; color: #2563eb; }
+.no-results { text-align: center; padding: 40px; color: #64748b; display: none; }
+@media (max-width: 768px) { .controls { flex-direction: column; align-items: flex-start; } .global-search-container { max-width: 100%; } }
+<link rel="stylesheet" href="/static/frontend/people.css">
+{% endblock %}
+{% block content %}
+<div class="people-container">
+    <header>
+        <h2>GateCore People</h2>
+        <p class="subtitle">Interactive table with column filters and search functionality</p>
+    </header>
+    <div class="controls">
+        <div class="global-search-container">
+            <i class="fas fa-search global-search-icon"></i>
+            <input type="text" id="globalSearch" class="global-search" placeholder="Search across all columns...">
+        </div>
+        <div>
+            <button id="resetAllFilters" class="filter-btn reset-btn">
+                <i class="fas fa-redo"></i> Reset All Filters
+            </button>
+        </div>
+    </div>
+    <div class="table-container">
+        <table id="peopleTable">
+            <thead>
+                <tr>
+                    <th class="filterable-header" data-column="name"><div class="header-content"><span>Name</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Name</div><input type="text" class="filter-search" placeholder="Search names..."><div class="filter-options" id="name-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="name">Reset</button><button class="filter-btn apply-btn" data-apply="name">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="gender"><div class="header-content"><span>Gender</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Gender</div><input type="text" class="filter-search" placeholder="Search genders..."><div class="filter-options" id="gender-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="gender">Reset</button><button class="filter-btn apply-btn" data-apply="gender">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="id_number"><div class="header-content"><span>ID Number</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by ID Number</div><input type="text" class="filter-search" placeholder="Search IDs..."><div class="filter-options" id="id_number-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="id_number">Reset</button><button class="filter-btn apply-btn" data-apply="id_number">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="phone"><div class="header-content"><span>Phone</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Phone</div><input type="text" class="filter-search" placeholder="Search phones..."><div class="filter-options" id="phone-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="phone">Reset</button><button class="filter-btn apply-btn" data-apply="phone">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="phone_device_type"><div class="header-content"><span>Device</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Device</div><input type="text" class="filter-search" placeholder="Search devices..."><div class="filter-options" id="phone_device_type-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="phone_device_type">Reset</button><button class="filter-btn apply-btn" data-apply="phone_device_type">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="phone_otp"><div class="header-content"><span>OTP</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by OTP</div><input type="text" class="filter-search" placeholder="Search OTPs..."><div class="filter-options" id="phone_otp-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="phone_otp">Reset</button><button class="filter-btn apply-btn" data-apply="phone_otp">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="facial_recognition_enabled"><div class="header-content"><span>Face?</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Face?</div><input type="text" class="filter-search" placeholder="Search..."><div class="filter-options" id="facial_recognition_enabled-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="facial_recognition_enabled">Reset</button><button class="filter-btn apply-btn" data-apply="facial_recognition_enabled">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="email"><div class="header-content"><span>Email</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Email</div><input type="text" class="filter-search" placeholder="Search emails..."><div class="filter-options" id="email-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="email">Reset</button><button class="filter-btn apply-btn" data-apply="email">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="date_of_birth"><div class="header-content"><span>Date of Birth</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Date of Birth</div><input type="text" class="filter-search" placeholder="Search dates..."><div class="filter-options" id="date_of_birth-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="date_of_birth">Reset</button><button class="filter-btn apply-btn" data-apply="date_of_birth">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="emergency_contact"><div class="header-content"><span>Emergency Contact</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Emergency Contact</div><input type="text" class="filter-search" placeholder="Search contacts..."><div class="filter-options" id="emergency_contact-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="emergency_contact">Reset</button><button class="filter-btn apply-btn" data-apply="emergency_contact">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="tags"><div class="header-content"><span>Tags</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Tags</div><input type="text" class="filter-search" placeholder="Search tags..."><div class="filter-options" id="tags-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="tags">Reset</button><button class="filter-btn apply-btn" data-apply="tags">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="unit"><div class="header-content"><span>Unit(s)</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Unit</div><input type="text" class="filter-search" placeholder="Search units..."><div class="filter-options" id="unit-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="unit">Reset</button><button class="filter-btn apply-btn" data-apply="unit">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="address"><div class="header-content"><span>Address(es)</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Address</div><input type="text" class="filter-search" placeholder="Search addresses..."><div class="filter-options" id="address-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="address">Reset</button><button class="filter-btn apply-btn" data-apply="address">Apply</button></div></div></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="peopleTableBody">
+                {% for person in people %}
+                <tr>
+                    <td>{{ person.full_name }}</td>
+                    <td>{{ person.get_gender_display }}</td>
+                    <td>{{ person.id_number }}</td>
+                    <td>{{ person.phone }}</td>
+                    <td>{{ person.get_phone_device_type_display }}</td>
+                    <td>{{ person.phone_otp }}</td>
+                    <td>{% if person.facial_recognition_enabled %}✔️{% else %}❌{% endif %}</td>
+                    <td>{{ person.email }}</td>
+                    <td>{{ person.date_of_birth|date:'Y-m-d'|default:'-' }}</td>
+                    <td>{{ person.emergency_contact_name }} ({{ person.emergency_contact_phone }})</td>
+                    <td>{{ person.tags|join:', ' }}</td>
+                    <td>{% for occ in person.occupancies.all %}{{ occ.unit.unit_number }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</td>
+                    <td>{% for occ in person.occupancies.all %}{{ occ.unit.property.address }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</td>
+                    <td><a href="/frontend/gatecore/people/{{ person.id }}/">Details</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="14" style="text-align:center;color:#64748b;">No people found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="no-results" id="noResults">
+            <i class="fas fa-search fa-2x" style="margin-bottom: 15px;"></i>
+            <h3>No results found</h3>
+            <p>Try adjusting your search or filters to find what you're looking for.</p>
+        </div>
+    </div>
+    <div class="footer-info">
+        <div>Showing <span class="record-count" id="visibleCount">0</span> of <span class="record-count" id="totalCount">0</span> records</div>
+        <div>GateCore People Table</div>
+    </div>
+</div>
+<script src="/static/frontend/people-table.js"></script>
+{% endblock %}

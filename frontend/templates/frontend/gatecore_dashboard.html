@@ -1,0 +1,102 @@
+{% extends "frontend/base.html" %}
+{% block title %}GateCore Dashboard{% endblock %}
+{% block head %}
+<style>
+.gatecore-dashboard {
+    max-width: 1300px;
+    margin: 40px auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+}
+.gatecore-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(59,130,246,0.07);
+    padding: 32px 28px 24px 28px;
+    flex: 1 1 320px;
+    min-width: 320px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border: 1.5px solid #e5e7eb;
+    transition: box-shadow 0.2s, border 0.2s;
+}
+.gatecore-card:hover {
+    box-shadow: 0 8px 32px rgba(99,102,241,0.13);
+    border: 1.5px solid #6366f1;
+}
+.gatecore-card h3 {
+    margin: 0 0 12px 0;
+    color: #2563eb;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.gatecore-card .count {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #6366f1;
+    margin-bottom: 8px;
+}
+.gatecore-card .desc {
+    color: #64748b;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+}
+.gatecore-card a {
+    color: #fff;
+    background: #6366f1;
+    padding: 7px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: background 0.2s;
+}
+.gatecore-card a:hover {
+    background: #2563eb;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-dashboard">
+    <div class="gatecore-card">
+        <h3><i class="fa-solid fa-building"></i> Sites</h3>
+        <div class="count">{{ sites_count }}</div>
+        <div class="desc">Total managed sites/estates</div>
+        <a href="/frontend/gatecore/sites/">View Sites</a>
+    </div>
+    <div class="gatecore-card">
+        <h3><i class="fa-solid fa-city"></i> Properties</h3>
+        <div class="count">{{ properties_count }}</div>
+        <div class="desc">Properties across all sites</div>
+        <a href="#">View Properties</a>
+    </div>
+    <div class="gatecore-card">
+        <h3><i class="fa-solid fa-door-open"></i> Units</h3>
+        <div class="count">{{ units_count }}</div>
+        <div class="desc">Units (apartments, offices, etc.)</div>
+        <a href="#">View Units</a>
+    </div>
+    <div class="gatecore-card">
+        <h3><i class="fa-solid fa-users"></i> People</h3>
+        <div class="count">{{ people_count }}</div>
+        <div class="desc">Registered residents, staff, guests</div>
+        <a href="#">View People</a>
+    </div>
+    <div class="gatecore-card">
+        <h3><i class="fa-solid fa-car"></i> Vehicles</h3>
+        <div class="count">{{ vehicles_count }}</div>
+        <div class="desc">Registered vehicles</div>
+        <a href="#">View Vehicles</a>
+    </div>
+    <div class="gatecore-card">
+        <h3><i class="fa-solid fa-key"></i> Access</h3>
+        <div class="count">{{ access_points_count }}</div>
+        <div class="desc">Access points/devices</div>
+        <a href="#">View Access</a>
+    </div>
+</div>
+{% endblock %}

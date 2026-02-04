@@ -8,7 +8,15 @@ def validate_phone_number(value):
     if not re.match(r'^\+?1?\d{9,15}$', value):
         raise ValidationError("Enter a valid phone number (9-15 digits, optional + prefix)")
 
+
 class Person(BaseModel):
+    PHONE_DEVICE_CHOICES = [
+        ("android", "Android"),
+        ("ios", "iOS"),
+        ("feature", "Feature Phone"),
+        ("other", "Other"),
+    ]
+
     GENDER_CHOICES = [
         ("M", "Male"),
         ("F", "Female"),
@@ -20,6 +28,10 @@ class Person(BaseModel):
     middle_name = models.CharField(max_length=100, blank=True)
     id_number = models.CharField(max_length=50, blank=True, null=True, unique=True)
     phone = models.CharField(max_length=30, validators=[validate_phone_number])
+    phone_device_type = models.CharField(max_length=20, choices=PHONE_DEVICE_CHOICES, blank=True)
+    phone_otp = models.CharField(max_length=8, blank=True)
+    phone_otp_created = models.DateTimeField(null=True, blank=True)
+    facial_recognition_enabled = models.BooleanField(default=False)
     email = models.EmailField(blank=True, null=True, validators=[validate_email])
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)

@@ -1,0 +1,27 @@
+{% extends "frontend/base.html" %}
+{% block title %}Access Permission Details{% endblock %}
+{% block head %}
+<style>
+.gatecore-detail { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); padding: 40px 36px 32px 36px; border: 1.5px solid #e5e7eb; }
+.gatecore-detail h2 { color: #2563eb; font-size: 2rem; font-weight: 800; margin-bottom: 18px; }
+.gatecore-detail .label { color: #64748b; font-weight: 600; margin-top: 18px; margin-bottom: 2px; font-size: 1.08rem; }
+.gatecore-detail .value { color: #374151; font-size: 1.13rem; margin-bottom: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-detail">
+    <h2><i class="fa-solid fa-key"></i> Access Permission</h2>
+    <div class="label">Person</div>
+    <div class="value">{% if perm.person %}<a href="/frontend/gatecore/people/{{ perm.person.id }}/" style="color:#2563eb;font-weight:600;">{{ perm.person.full_name }}</a>{% else %}-{% endif %}</div>
+    <div class="label">Access Point</div>
+    <div class="value"><a href="/frontend/gatecore/access-points/{{ perm.access_point.id }}/" style="color:#2563eb;font-weight:600;">{{ perm.access_point.name }}</a></div>
+    <div class="label">Credential</div>
+    <div class="value">{% if perm.credential %}<a href="/frontend/gatecore/access-credentials/{{ perm.credential.id }}/" style="color:#2563eb;font-weight:600;">{{ perm.credential.credential_code }}</a>{% else %}-{% endif %}</div>
+    <div class="label">Schedule</div>
+    <div class="value">{% if perm.schedule_rule %}<a href="/frontend/gatecore/schedule-rules/{{ perm.schedule_rule.id }}/" style="color:#2563eb;font-weight:600;">{{ perm.schedule_rule.name }}</a>{% else %}-{% endif %}</div>
+    <div class="label">Status</div>
+    <div class="value">{{ perm.get_status_display }}</div>
+    <div class="label">Description</div>
+    <div class="value">{{ perm.description|default:"-" }}</div>
+</div>
+{% endblock %}

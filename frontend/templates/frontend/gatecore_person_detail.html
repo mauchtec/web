@@ -1,0 +1,95 @@
+{% extends "frontend/base.html" %}
+{% block title %}Person Details{% endblock %}
+{% block head %}
+<style>
+.gatecore-detail { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(59,130,246,0.07); padding: 40px 36px 32px 36px; border: 1.5px solid #e5e7eb; }
+.gatecore-detail h2 { color: #2563eb; font-size: 2rem; font-weight: 800; margin-bottom: 18px; }
+.gatecore-detail .label { color: #64748b; font-weight: 600; margin-top: 18px; margin-bottom: 2px; font-size: 1.08rem; }
+.gatecore-detail .value { color: #374151; font-size: 1.13rem; margin-bottom: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="gatecore-detail">
+    <h2><i class="fa-solid fa-user"></i> {{ person.full_name }}</h2>
+    <div class="label">Gender</div>
+    <div class="value">{{ person.get_gender_display }}</div>
+    <div class="label">ID Number</div>
+    <div class="value">{{ person.id_number }}</div>
+    <div class="label">Phone</div>
+    <div class="value">{{ person.phone }}</div>
+    <div class="label">Email</div>
+    <div class="value">{{ person.email }}</div>
+    <div class="label">Date of Birth</div>
+    <div class="value">{{ person.date_of_birth|date:'Y-m-d'|default:'-' }}</div>
+    <div class="label">Emergency Contact</div>
+    <div class="value">{{ person.emergency_contact_name }} ({{ person.emergency_contact_phone }})</div>
+    <div class="label">Notes</div>
+    <div class="value">{{ person.notes|default:'-' }}</div>
+    <div class="label">Tags</div>
+    <div class="value">{{ person.tags|join:', ' }}</div>
+    <div class="label">Occupancies</div>
+    <div class="value">
+        {% for occ in occupancies %}
+            <span style="color:#2563eb;font-weight:600;">{{ occ.unit.unit_code }} ({{ occ.get_role_display }})</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No occupancies found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Vehicles</div>
+    <div class="value">
+        {% for vehicle in vehicles %}
+            <a href="/frontend/gatecore/vehicles/{{ vehicle.id }}/" style="color:#2563eb;font-weight:600;">{{ vehicle.license_plate }}</a>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No vehicles found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Credentials</div>
+    <div class="value">
+        {% for cred in credentials %}
+            <span style="color:#2563eb;font-weight:600;">{{ cred.get_credential_type_display }} ({{ cred.credential_value }})</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No credentials found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Access Permissions</div>
+    <div class="value">
+        {% for perm in permissions %}
+            <span style="color:#2563eb;font-weight:600;">{{ perm.access_point.name }} ({{ perm.schedule_rule.name|default:'Anytime' }})</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No permissions found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Recent Access Logs</div>
+    <div class="value">
+        {% for log in access_logs %}
+            <span style="color:#2563eb;font-weight:600;">{{ log.timestamp|date:'Y-m-d H:i' }} - {{ log.access_point.name|default:'-' }} ({{ log.get_result_display }})</span><br>
+        {% empty %}
+            <span style="color:#64748b;">No logs found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Guest Registrations (as Guest)</div>
+    <div class="value">
+        {% for guest in guest_registrations %}
+            <span style="color:#2563eb;font-weight:600;">{{ guest.unit.unit_code }} (Host: {{ guest.host.full_name }}) [{{ guest.status }}]</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No guest registrations found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Hosted Guests</div>
+    <div class="value">
+        {% for guest in hosted_guests %}
+            <span style="color:#2563eb;font-weight:600;">{{ guest.unit.unit_code }} (Guest: {{ guest.guest.full_name }}) [{{ guest.status }}]</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No hosted guests found.</span>
+        {% endfor %}
+    </div>
+    <div class="label">Blacklist Entries</div>
+    <div class="value">
+        {% for entry in blacklist_entries %}
+            <span style="color:#ef4444;font-weight:600;">{{ entry.reason }} ({{ entry.blacklisted_from|date:'Y-m-d' }})</span>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <span style="color:#64748b;">No blacklist entries found.</span>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
