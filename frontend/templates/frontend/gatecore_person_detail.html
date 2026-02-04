@@ -91,5 +91,37 @@
             <span style="color:#64748b;">No blacklist entries found.</span>
         {% endfor %}
     </div>
+
+    <div class="label">Audit Trail</div>
+    <div class="value">
+        {% if audit_trails %}
+        <table style="width:100%;border-collapse:collapse;font-size:0.98rem;margin-top:8px;">
+            <thead>
+                <tr style="background:#f3f4f6;color:#374151;">
+                    <th style="padding:6px 8px;text-align:left;">When</th>
+                    <th style="padding:6px 8px;text-align:left;">Action</th>
+                    <th style="padding:6px 8px;text-align:left;">Unit</th>
+                    <th style="padding:6px 8px;text-align:left;">By</th>
+                    <th style="padding:6px 8px;text-align:left;">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for audit in audit_trails %}
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                    <td style="padding:6px 8px;">{{ audit.timestamp|date:'Y-m-d H:i' }}</td>
+                    <td style="padding:6px 8px;">{{ audit.get_action_display }}</td>
+                    <td style="padding:6px 8px;">{% if audit.unit %}{{ audit.unit.unit_code }}{% else %}-{% endif %}</td>
+                    <td style="padding:6px 8px;">
+                        {% if audit.performed_by %}{{ audit.performed_by.username }}{% else %}System{% endif %}
+                    </td>
+                    <td style="padding:6px 8px;">{{ audit.details }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <span style="color:#64748b;">No audit trail found.</span>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

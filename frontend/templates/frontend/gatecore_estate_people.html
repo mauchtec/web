@@ -1,0 +1,526 @@
+{% extends "frontend/base.html" %}
+{% block title %}Estate/Unit People Overview{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/frontend/people.css">
+<style>
+    /* Highlight selected person row */
+    .selected-person {
+        background: #ede9fe !important;
+        box-shadow: 0 2px 8px #7c3aed22;
+        transition: background 0.2s;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="people-container">
+    <header>
+        <h2>Estates/Units</h2>
+        <p class="subtitle">Click a unit to view people staying there</p>
+    </header>
+    <div class="table-container">
+        <table id="unitTable">
+            <thead>
+                <tr>
+                    <th class="filterable-header" data-column="site"><div class="header-content"><span>Site</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Site</div><input type="text" class="filter-search" placeholder="Search sites..."><div class="filter-options" id="site-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="site">Reset</button><button class="filter-btn apply-btn" data-apply="site">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="property"><div class="header-content"><span>Property</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Property</div><input type="text" class="filter-search" placeholder="Search properties..."><div class="filter-options" id="property-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="property">Reset</button><button class="filter-btn apply-btn" data-apply="property">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="unit_code"><div class="header-content"><span>Unit</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Unit</div><input type="text" class="filter-search" placeholder="Search units..."><div class="filter-options" id="unit_code-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="unit_code">Reset</button><button class="filter-btn apply-btn" data-apply="unit_code">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="type"><div class="header-content"><span>Type</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Type</div><input type="text" class="filter-search" placeholder="Search types..."><div class="filter-options" id="type-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="type">Reset</button><button class="filter-btn apply-btn" data-apply="type">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="status"><div class="header-content"><span>Status</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Status</div><input type="text" class="filter-search" placeholder="Search status..."><div class="filter-options" id="status-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="status">Reset</button><button class="filter-btn apply-btn" data-apply="status">Apply</button></div></div></th>
+                </tr>
+            </thead>
+            <tbody id="unitTableBody">
+                {% for unit in units %}
+                <tr class="unit-row{% if selected_unit and unit.id == selected_unit.id %} selected-unit{% endif %}" style="cursor:pointer;" onclick="window.location='?unit={{ unit.id }}'">
+                    <td>{{ unit.property.site.name }}</td>
+                    <td>{{ unit.property.name }}</td>
+                    <td>{{ unit.unit_code }}</td>
+                    <td>{{ unit.get_unit_type_display }}</td>
+                    <td>{{ unit.get_status_display }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align:center;color:#64748b;">No units found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if selected_unit %}
+    <div class="table-container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h2 style="color:#374151;font-size:1.15rem;font-weight:700;">People in Selected Unit</h2>
+            <div style="display:flex;gap:10px;">
+                <button id="addPersonBtn" class="filter-btn apply-btn" style="font-size:13px;"><i class="fas fa-user-plus"></i> Add New Person</button>
+                <button id="linkPersonBtn" class="filter-btn apply-btn" style="font-size:13px;background:#7c3aed;"><i class="fas fa-link"></i> Link Person to Additional Unit</button>
+                <button id="reallocatePersonBtn" class="filter-btn apply-btn" style="font-size:13px;background:#f59e42;"><i class="fas fa-exchange-alt"></i> Move Person to Another Unit</button>
+            </div>
+        </div>
+        <!-- Link Person Modal -->
+        <div id="linkPersonModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:9999;align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:30px 25px;border-radius:10px;min-width:350px;max-width:90vw;box-shadow:0 2px 16px #0002;">
+                <h3 style="margin-top:0;margin-bottom:18px;font-size:1.1rem;color:#374151;font-weight:700;">Link Person to Additional Unit</h3>
+                <form id="linkPersonForm">
+                    <div style="margin-bottom:15px;">
+                        <label for="link_person_id" style="font-weight:600;color:#374151;">Select Person:</label>
+                        <select name="person_id" id="link_person_id" required style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;">
+                            <option value="">Choose person...</option>
+                            {% for person in people %}
+                                <option value="{{ person.id }}">{{ person.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label for="link_unit_id" style="font-weight:600;color:#374151;">Select Unit:</label>
+                        <select name="unit_id" id="link_unit_id" required style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;">
+                            <option value="">Choose unit...</option>
+                            {% for unit in units %}
+                                <option value="{{ unit.id }}">{{ unit.property.site.name }} - {{ unit.property.name }} - {{ unit.unit_code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button type="button" onclick="closeLinkPersonModal()" class="filter-btn reset-btn">Cancel</button>
+                        <button type="submit" class="filter-btn apply-btn">Link</button>
+                    </div>
+                </form>
+                <div id="linkPersonError" style="color:#ef4444;font-weight:600;margin-top:10px;display:none;"></div>
+            </div>
+        </div>
+        <!-- Reallocate Modal (unchanged) -->
+        <div id="reallocateModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:9999;align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:30px 25px;border-radius:10px;min-width:350px;max-width:90vw;box-shadow:0 2px 16px #0002;">
+                <h3 style="margin-top:0;margin-bottom:18px;font-size:1.1rem;color:#374151;font-weight:700;">Move Person to Another Unit</h3>
+                <form id="reallocateForm">
+                    <input type="hidden" name="person_id" id="reallocatePersonId">
+                    <div style="margin-bottom:15px;">
+                        <label for="new_unit_id" style="font-weight:600;color:#374151;">Select New Unit:</label>
+                        <select name="new_unit_id" id="new_unit_id" required style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;">
+                            <option value="">Choose unit...</option>
+                            {% for unit in units %}
+                                <option value="{{ unit.id }}">{{ unit.property.site.name }} - {{ unit.property.name }} - {{ unit.unit_code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button type="button" onclick="closeReallocateModal()" class="filter-btn reset-btn">Cancel</button>
+                        <button type="submit" class="filter-btn apply-btn">Move</button>
+                    </div>
+                </form>
+                <div id="reallocateError" style="color:#ef4444;font-weight:600;margin-top:10px;display:none;"></div>
+            </div>
+        </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;margin-bottom:8px;">
+            <div style="font-weight:600;color:#374151;">People Table</div>
+            <div class="column-visibility-dropdown" style="position:relative;">
+                <button id="toggleColumnVisibilityBtn" class="filter-btn apply-btn" style="font-size:12px;padding:4px 10px;"><i class="fas fa-columns"></i> Columns</button>
+                <div id="columnVisibilityMenu" style="display:none;position:absolute;left:0;top:110%;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 2px 8px #0002;padding:12px 16px;z-index:1000;min-width:180px;">
+                    <!-- JS will populate checkboxes here -->
+                </div>
+            </div>
+        </div>
+        <table id="peopleTable">
+            <thead>
+                <tr id="peopleTableHeaderRow">
+                    <th class="filterable-header" data-column="name"><div class="header-content"><span>Name</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Name</div><input type="text" class="filter-search" placeholder="Search names..."><div class="filter-options" id="people-name-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="name">Reset</button><button class="filter-btn apply-btn" data-apply="name">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="role"><div class="header-content"><span>Role</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Role</div><input type="text" class="filter-search" placeholder="Search roles..."><div class="filter-options" id="people-role-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="role">Reset</button><button class="filter-btn apply-btn" data-apply="role">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="id_number"><div class="header-content"><span>ID Number</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by ID Number</div><input type="text" class="filter-search" placeholder="Search IDs..."><div class="filter-options" id="people-id_number-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="id_number">Reset</button><button class="filter-btn apply-btn" data-apply="id_number">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="phone"><div class="header-content"><span>Phone</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Phone</div><input type="text" class="filter-search" placeholder="Search phones..."><div class="filter-options" id="people-phone-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="phone">Reset</button><button class="filter-btn apply-btn" data-apply="phone">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="phone_device_type"><div class="header-content"><span>Device</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Device</div><input type="text" class="filter-search" placeholder="Search devices..."><div class="filter-options" id="people-phone_device_type-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="phone_device_type">Reset</button><button class="filter-btn apply-btn" data-apply="phone_device_type">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="phone_otp"><div class="header-content"><span>OTP</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by OTP</div><input type="text" class="filter-search" placeholder="Search OTPs..."><div class="filter-options" id="people-phone_otp-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="phone_otp">Reset</button><button class="filter-btn apply-btn" data-apply="phone_otp">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="facial_recognition_enabled"><div class="header-content"><span>Face?</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Face?</div><input type="text" class="filter-search" placeholder="Search..."><div class="filter-options" id="people-facial_recognition_enabled-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="facial_recognition_enabled">Reset</button><button class="filter-btn apply-btn" data-apply="facial_recognition_enabled">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="email"><div class="header-content"><span>Email</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Email</div><input type="text" class="filter-search" placeholder="Search emails..."><div class="filter-options" id="people-email-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="email">Reset</button><button class="filter-btn apply-btn" data-apply="email">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="date_of_birth"><div class="header-content"><span>Date of Birth</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Date of Birth</div><input type="text" class="filter-search" placeholder="Search dates..."><div class="filter-options" id="people-date_of_birth-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="date_of_birth">Reset</button><button class="filter-btn apply-btn" data-apply="date_of_birth">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="emergency_contact"><div class="header-content"><span>Emergency Contact</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Emergency Contact</div><input type="text" class="filter-search" placeholder="Search contacts..."><div class="filter-options" id="people-emergency_contact-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="emergency_contact">Reset</button><button class="filter-btn apply-btn" data-apply="emergency_contact">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="tags"><div class="header-content"><span>Tags</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Tags</div><input type="text" class="filter-search" placeholder="Search tags..."><div class="filter-options" id="people-tags-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="tags">Reset</button><button class="filter-btn apply-btn" data-apply="tags">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="unit"><div class="header-content"><span>Unit(s)</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Unit</div><input type="text" class="filter-search" placeholder="Search units..."><div class="filter-options" id="people-unit-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="unit">Reset</button><button class="filter-btn apply-btn" data-apply="unit">Apply</button></div></div></th>
+                    <th class="filterable-header" data-column="address"><div class="header-content"><span>Address(es)</span><i class="fas fa-filter filter-icon"></i></div><div class="filter-dropdown"><div class="filter-title">Filter by Address</div><input type="text" class="filter-search" placeholder="Search addresses..."><div class="filter-options" id="people-address-options"></div><div class="filter-actions"><button class="filter-btn reset-btn" data-reset="address">Reset</button><button class="filter-btn apply-btn" data-apply="address">Apply</button></div></div></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="peopleTableBody">
+                <!-- Add Person Form Row (hidden by default, shown when Add button clicked) -->
+                <tr id="addPersonFormRow" style="display:none;background:#e0e7ff;">
+                    <form id="addPersonForm" style="display:contents;">
+                        <td><input type="text" name="full_name" placeholder="Full Name" required style="width:100%;"></td>
+                        <td>
+                            <select name="role" required style="width:100%;">
+                                <option value="">Select Role</option>
+                                <option value="owner">Owner</option>
+                                <option value="tenant">Tenant</option>
+                                <option value="employee">Employee</option>
+                                <option value="contractor">Contractor</option>
+                                <option value="family_member">Family Member</option>
+                                <option value="guest">Guest</option>
+                                <option value="service_provider">Service Provider</option>
+                            </select>
+                        </td>
+                        <td><input type="text" name="id_number" placeholder="ID Number" style="width:100%;"></td>
+                        <td><input type="text" name="phone" placeholder="Phone" required style="width:100%;"></td>
+                        <td><input type="text" name="phone_device_type" placeholder="Device" style="width:100%;"></td>
+                        <td><input type="text" name="phone_otp" placeholder="OTP" style="width:100%;"></td>
+                        <td><select name="facial_recognition_enabled" style="width:100%;"><option value="">Face?</option><option value="Yes">✔️</option><option value="No">❌</option></select></td>
+                        <td><input type="email" name="email" placeholder="Email" style="width:100%;"></td>
+                        <td><input type="date" name="date_of_birth" style="width:100%;"></td>
+                        <td><input type="text" name="emergency_contact" placeholder="Emergency Contact" style="width:100%;"></td>
+                        <td><input type="text" name="tags" placeholder="Tags" style="width:100%;"></td>
+                        <td><input type="text" name="unit" value="{{ selected_unit.unit_code }}" readonly style="width:100%;background:#f3f4f6;"></td>
+                        <td><input type="text" name="address" value="{{ selected_unit.property.address }}" readonly style="width:100%;background:#f3f4f6;"></td>
+                        <td><button type="submit" class="filter-btn apply-btn" style="width:100%;"><i class="fas fa-save"></i> Save</button></td>
+                    </form>
+                </tr>
+                
+                {% for person in people %}
+                <tr data-person-id="{{ person.id }}" data-unit="{% for occ in person.occupancies.all %}{% if occ.is_active and not occ.is_deleted %}{{ occ.unit.unit_number }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}"
+                    data-address="{% for occ in person.occupancies.all %}{% if occ.is_active and not occ.is_deleted %}{{ occ.unit.property.address }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}"
+                    onclick="selectPersonRow(this)" ondblclick="editPersonRow(this, '{{ person.id }}')">
+                    <td>{{ person.full_name }}</td>
+                    <td>{% for occ in selected_unit.occupancies.all %}{% if occ.person.id == person.id and occ.is_active and not occ.is_deleted %}{{ occ.get_role_display }}{% endif %}{% endfor %}</td>
+                    <td>{{ person.id_number }}</td>
+                    <td>{{ person.phone }}</td>
+                    <td>{{ person.get_phone_device_type_display }}</td>
+                    <td>{{ person.phone_otp }}</td>
+                    <td>{% if person.facial_recognition_enabled %}✔️{% else %}❌{% endif %}</td>
+                    <td>{{ person.email }}</td>
+                    <td>{{ person.date_of_birth|date:'Y-m-d'|default:'-' }}</td>
+                    <td>{{ person.emergency_contact_name }} ({{ person.emergency_contact_phone }})</td>
+                    <td>{{ person.tags|join:', ' }}</td>
+                    <td>
+                        {% with active_occupancies=person.occupancies.all|dictsort:"start_date" %}
+                            {% for occ in active_occupancies %}{% if occ.is_active and not occ.is_deleted %}{{ occ.unit.unit_number }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}
+                            {% if not active_occupancies|length or not active_occupancies|dictsort:"start_date"|yesno:"yes,no" %}-{% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% with active_occupancies=person.occupancies.all|dictsort:"start_date" %}
+                            {% for occ in active_occupancies %}{% if occ.is_active and not occ.is_deleted %}{{ occ.unit.property.address }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}
+                            {% if not active_occupancies|length or not active_occupancies|dictsort:"start_date"|yesno:"yes,no" %}-{% endif %}
+                        {% endwith %}
+                    </td>
+                    <td><a href="/frontend/gatecore/people/{{ person.id }}/">Details</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="14" style="color:#64748b;">No people in this unit.</td></tr>
+                {% endfor %}
+                {% if page_obj and paginator.num_pages > 1 %}
+                <tr>
+                    <td colspan="14" style="padding:0;">
+                        <div class="pagination" style="margin:18px 0;display:flex;justify-content:center;align-items:center;gap:8px;">
+                            {% if page_obj.has_previous %}
+                                <a href="?unit={{ selected_unit.id }}&page=1" class="filter-btn" style="padding:4px 10px;">&laquo; First</a>
+                                <a href="?unit={{ selected_unit.id }}&page={{ page_obj.previous_page_number }}" class="filter-btn" style="padding:4px 10px;">&lsaquo; Prev</a>
+                            {% else %}
+                                <span class="filter-btn reset-btn" style="padding:4px 10px;opacity:0.5;">&laquo; First</span>
+                                <span class="filter-btn reset-btn" style="padding:4px 10px;opacity:0.5;">&lsaquo; Prev</span>
+                            {% endif %}
+                            <span style="font-weight:600;">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+                            {% if page_obj.has_next %}
+                                <a href="?unit={{ selected_unit.id }}&page={{ page_obj.next_page_number }}" class="filter-btn" style="padding:4px 10px;">Next &rsaquo;</a>
+                                <a href="?unit={{ selected_unit.id }}&page={{ paginator.num_pages }}" class="filter-btn" style="padding:4px 10px;">Last &raquo;</a>
+                            {% else %}
+                                <span class="filter-btn reset-btn" style="padding:4px 10px;opacity:0.5;">Next &rsaquo;</span>
+                                <span class="filter-btn reset-btn" style="padding:4px 10px;opacity:0.5;">Last &raquo;</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <div class="no-results" id="noResults" style="display:none;">
+            <i class="fas fa-search fa-2x" style="margin-bottom: 15px;"></i>
+            <h3>No results found</h3>
+            <p>Try adjusting your search or filters to find what you're looking for.</p>
+        </div>
+        <div class="footer-info">
+            <div>Showing <span class="record-count" id="visibleCount">0</span> of <span class="record-count" id="totalCount">0</span> records</div>
+            <div>People Table</div>
+        </div>
+        <script src="/static/frontend/people-table.js"></script>
+        
+        <!-- Inline script must come after people-table.js so window.initPeopleTable is defined -->
+        <script>
+        // --- Unit Table Filtering ---
+        function initUnitTable() {
+            // ...existing code...
+        }
+
+        // --- People Table Column Visibility & Reordering ---
+        function initPeopleTableColumnControls() {
+            const table = document.getElementById('peopleTable');
+            if (!table) return;
+            const headerRow = document.getElementById('peopleTableHeaderRow');
+            const columns = Array.from(headerRow.children).map((th, idx) => ({
+                th,
+                idx,
+                key: th.getAttribute('data-column') || th.innerText.trim() || `col${idx}`,
+                label: th.innerText.trim() || `Column ${idx+1}`
+            }));
+            // Hide/show columns
+            const menu = document.getElementById('columnVisibilityMenu');
+            const btn = document.getElementById('toggleColumnVisibilityBtn');
+            let colState = JSON.parse(localStorage.getItem('peopleTableColState') || '{}');
+            function renderMenu() {
+                menu.innerHTML = '';
+                columns.forEach((col, i) => {
+                    // Always show Actions column
+                    const disabled = col.key === 'Actions';
+                    const checked = colState[col.key] !== false;
+                    const div = document.createElement('div');
+                    div.style.display = 'flex';
+                    div.style.alignItems = 'center';
+                    div.style.gap = '7px';
+                    div.innerHTML = `<input type="checkbox" id="colvis-${col.key}" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}><label for="colvis-${col.key}">${col.label}</label>`;
+                    div.querySelector('input').addEventListener('change', function() {
+                        colState[col.key] = this.checked;
+                        localStorage.setItem('peopleTableColState', JSON.stringify(colState));
+                        updateColVisibility();
+                    });
+                    menu.appendChild(div);
+                });
+            }
+            function updateColVisibility() {
+                columns.forEach((col, i) => {
+                    if (col && col.key !== undefined) {
+                        const show = colState[col.key] !== false;
+                        col.th.style.display = show ? '' : 'none';
+                    } else {
+                        console.warn('Skipping column at index', i, col);
+                    }
+                });
+                // Update all rows
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    Array.from(row.children).forEach((td, i) => {
+                        if (columns[i] && columns[i].key !== undefined) {
+                            const show = colState[columns[i].key] !== false;
+                            td.style.display = show ? '' : 'none';
+                        } else {
+                            // Defensive: skip undefined column
+                            td.style.display = '';
+                        }
+                    });
+                });
+            }
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+            document.addEventListener('click', function(e) {
+                if (!menu.contains(e.target) && e.target !== btn) {
+                    menu.style.display = 'none';
+                }
+            });
+            renderMenu();
+            updateColVisibility();
+
+            // --- Drag to reorder columns ---
+            let dragColIdx = null;
+            columns.forEach((col, idx) => {
+                if (col.key === 'Actions') return;
+                col.th.draggable = true;
+                col.th.addEventListener('dragstart', function(e) {
+                    dragColIdx = idx;
+                    e.dataTransfer.effectAllowed = 'move';
+                    col.th.classList.add('dragging');
+                });
+                col.th.addEventListener('dragend', function(e) {
+                    dragColIdx = null;
+                    col.th.classList.remove('dragging');
+                });
+                col.th.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                col.th.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (dragColIdx === null || dragColIdx === idx) return;
+                    // Reorder columns in header
+                    if (dragColIdx < idx) {
+                        headerRow.insertBefore(columns[dragColIdx].th, columns[idx].th.nextSibling);
+                    } else {
+                        headerRow.insertBefore(columns[dragColIdx].th, columns[idx].th);
+                    }
+                    // Reorder columns in all rows
+                    table.querySelectorAll('tbody tr').forEach(row => {
+                        const cells = Array.from(row.children);
+                        const moving = cells[dragColIdx];
+                        if (dragColIdx < idx) {
+                            row.insertBefore(moving, cells[idx].nextSibling);
+                        } else {
+                            row.insertBefore(moving, cells[idx]);
+                        }
+                    });
+                    // Update columns array order
+                    const moved = columns.splice(dragColIdx, 1)[0];
+                    columns.splice(idx, 0, moved);
+                    // Save order to localStorage
+                    localStorage.setItem('peopleTableColOrder', JSON.stringify(columns.map(c => c.key)));
+                });
+            });
+            // Restore column order from localStorage
+            const savedOrder = JSON.parse(localStorage.getItem('peopleTableColOrder') || 'null');
+            if (savedOrder) {
+                // Reorder header
+                savedOrder.forEach((key, i) => {
+                    const colIdx = columns.findIndex(c => c.key === key);
+                    if (colIdx !== -1 && colIdx !== i) {
+                        headerRow.insertBefore(columns[colIdx].th, columns[i].th);
+                        const moved = columns.splice(colIdx, 1)[0];
+                        columns.splice(i, 0, moved);
+                    }
+                });
+                // Reorder all rows
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    const cells = Array.from(row.children);
+                    savedOrder.forEach((key, i) => {
+                        const colIdx = columns.findIndex(c => c.key === key);
+                        if (colIdx !== -1 && colIdx !== i) {
+                            row.insertBefore(cells[colIdx], row.children[i]);
+                        }
+                    });
+                });
+            }
+        }
+
+        // Expose selectPersonRow globally so it works after filtering
+        window.selectPersonRow = function(row) {
+            document.querySelectorAll('#peopleTableBody tr').forEach(r => r.classList.remove('selected-person'));
+            row.classList.add('selected-person');
+            window.selectedPersonId = row.getAttribute('data-person-id');
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize unit table filtering
+            if (document.getElementById('unitTable')) {
+                initUnitTable();
+            }
+            
+            // Initialize people table
+            if (window.initPeopleTable) {
+                initPeopleTable();
+            }
+            
+            // Initialize column controls
+            initPeopleTableColumnControls();
+            
+            // Add Person button
+            document.getElementById('addPersonBtn')?.addEventListener('click', function() {
+                const formRow = document.getElementById('addPersonFormRow');
+                if (formRow) {
+                    formRow.style.display = formRow.style.display === 'none' ? 'table-row' : 'none';
+                }
+            });
+            
+            // Link Person button
+            document.getElementById('linkPersonBtn')?.addEventListener('click', function() {
+                document.getElementById('linkPersonModal').style.display = 'flex';
+            });
+            
+            // Reallocate Person button
+            document.getElementById('reallocatePersonBtn')?.addEventListener('click', function() {
+                if (!window.selectedPersonId) {
+                    alert('Please select a person first by clicking on their row.');
+                    return;
+                }
+                document.getElementById('reallocatePersonId').value = window.selectedPersonId;
+                document.getElementById('reallocateModal').style.display = 'flex';
+            });
+            
+            // Close modals
+            window.closeLinkPersonModal = function() {
+                document.getElementById('linkPersonModal').style.display = 'none';
+            };
+            
+            window.closeReallocateModal = function() {
+                document.getElementById('reallocateModal').style.display = 'none';
+            };
+            
+            // Submit forms via AJAX
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            };
+            
+            // Link Person Form
+            document.getElementById('linkPersonForm')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+                const errorDiv = document.getElementById('linkPersonError');
+                
+                try {
+                    const response = await fetch('/frontend/gatecore/people/link-to-unit/', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        const result = await response.json();
+                        errorDiv.textContent = result.error || 'An error occurred';
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    errorDiv.textContent = 'Network error occurred';
+                    errorDiv.style.display = 'block';
+                }
+            });
+            
+            // Reallocate Form
+            document.getElementById('reallocateForm')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+                const errorDiv = document.getElementById('reallocateError');
+                
+                try {
+                    const response = await fetch('/frontend/gatecore/people/reallocate/', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        const result = await response.json();
+                        errorDiv.textContent = result.error || 'An error occurred';
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    errorDiv.textContent = 'Network error occurred';
+                    errorDiv.style.display = 'block';
+                }
+            });
+            
+            // Add Person Form
+            document.getElementById('addPersonForm')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+                data.unit_id = '{{ selected_unit.id }}';
+                
+                try {
+                    const response = await fetch('/frontend/gatecore/people/add/', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        const result = await response.json();
+                        alert(result.error || 'Failed to add person');
+                    }
+                } catch (error) {
+                    alert('Network error occurred');
+                }
+            });
+        });
+        </script>
+    {% endif %}
+</div>
+{% endblock %}

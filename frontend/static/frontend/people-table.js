@@ -1,35 +1,27 @@
 // Interactive, professional people table for GateCore
 // Requires: table with id 'peopleTable', tbody id 'peopleTableBody', and filterable-header ths
 
-document.addEventListener('DOMContentLoaded', function() {
+
+window.initPeopleTable = function() {
     // Extract table data from rendered HTML
     const table = document.getElementById('peopleTable');
     const tbody = document.getElementById('peopleTableBody');
+    if (!table || !tbody) return;
     const rows = Array.from(tbody.querySelectorAll('tr'));
-    const columns = [
-        'name', 'gender', 'id_number', 'phone', 'phone_device_type', 'phone_otp',
-        'facial_recognition_enabled', 'email', 'date_of_birth', 'emergency_contact',
-        'tags', 'unit', 'address'
-    ];
+    // Detect columns from thead
+    const ths = table.querySelectorAll('thead th');
+    const columns = Array.from(ths)
+        .map(th => th.getAttribute('data-column'))
+        .filter(Boolean);
     // Build data array for filtering
     const data = rows.map(row => {
         const cells = row.querySelectorAll('td');
-        return {
-            name: cells[0]?.textContent.trim() || '',
-            gender: cells[1]?.textContent.trim() || '',
-            id_number: cells[2]?.textContent.trim() || '',
-            phone: cells[3]?.textContent.trim() || '',
-            phone_device_type: cells[4]?.textContent.trim() || '',
-            phone_otp: cells[5]?.textContent.trim() || '',
-            facial_recognition_enabled: cells[6]?.textContent.trim() || '',
-            email: cells[7]?.textContent.trim() || '',
-            date_of_birth: cells[8]?.textContent.trim() || '',
-            emergency_contact: cells[9]?.textContent.trim() || '',
-            tags: cells[10]?.textContent.trim() || '',
-            unit: cells[11]?.textContent.trim() || '',
-            address: cells[12]?.textContent.trim() || '',
-            actions: cells[13]?.innerHTML || ''
-        };
+        let obj = { rowElement: row };
+        columns.forEach((col, idx) => {
+            obj[col] = cells[idx]?.textContent.trim() || '';
+        });
+        obj['actions'] = cells[cells.length - 1]?.innerHTML || '';
+        return obj;
     });
     // State
     let activeFilters = {};
@@ -39,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate filter options
     function populateFilterOptions() {
         columns.forEach((col, idx) => {
-            const optionsContainer = document.getElementById(col + '-options');
+            const optionsContainer = document.getElementById(`people-${col}-options`);
             if (!optionsContainer) return;
             // Unique values
             const unique = [...new Set(data.map(row => row[col]).filter(Boolean))];
@@ -47,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
             unique.forEach(val => {
                 const div = document.createElement('div');
                 div.className = 'filter-option';
-                div.innerHTML = `<input type="checkbox" id="${col}-${val}" value="${val}"><label for="${col}-${val}">${val}</label>`;
+                div.innerHTML = `<input type="checkbox" id="people-${col}-${val}" value="${val}"><label for="people-${col}-${val}">${val}</label>`;
                 optionsContainer.appendChild(div);
             });
             // Search inside dropdown
@@ -71,29 +63,13 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.innerHTML = '';
         if (!filtered.length) {
             document.getElementById('noResults').style.display = 'block';
-        } else {
-            document.getElementById('noResults').style.display = 'none';
-            filtered.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.name}</td>
-                    <td>${row.gender}</td>
-                    <td>${row.id_number}</td>
-                    <td>${row.phone}</td>
-                    <td>${row.phone_device_type}</td>
-                    <td>${row.phone_otp}</td>
-                    <td>${row.facial_recognition_enabled}</td>
-                    <td>${row.email}</td>
-                    <td>${row.date_of_birth}</td>
-                    <td>${row.emergency_contact}</td>
-                    <td>${row.tags}</td>
-                    <td>${row.unit}</td>
-                    <td>${row.address}</td>
-                    <td>${row.actions}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+            updateRecordCount(0);
+            return;
         }
+        document.getElementById('noResults').style.display = 'none';
+        filtered.forEach(item => {
+            tbody.appendChild(item.rowElement);
+        });
         updateRecordCount(filtered.length);
     }
     // Filtering logic
@@ -112,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dropdown logic
     function toggleFilterDropdown(col) {
         closeActiveDropdown();
-        const header = document.querySelector(`.filterable-header[data-column="${col}"]`);
+        const header = document.querySelector(`#peopleTable .filterable-header[data-column="${col}"]`);
         const dropdown = header.querySelector('.filter-dropdown');
         header.classList.add('active');
         dropdown.classList.add('active');
@@ -124,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function closeActiveDropdown() {
         if (activeDropdown) {
-            const header = document.querySelector(`.filterable-header[data-column="${activeDropdown}"]`);
+            const header = document.querySelector(`#peopleTable .filterable-header[data-column="${activeDropdown}"]`);
             const dropdown = header.querySelector('.filter-dropdown');
             header.classList.remove('active');
             dropdown.classList.remove('active');
@@ -132,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     function applyColumnFilter(col) {
-        const dropdown = document.querySelector(`.filterable-header[data-column="${col}"] .filter-dropdown`);
+        const dropdown = document.querySelector(`#peopleTable .filterable-header[data-column="${col}"] .filter-dropdown`);
         const checked = dropdown.querySelectorAll('input[type="checkbox"]:checked');
         activeFilters[col] = Array.from(checked).map(cb => cb.value);
         closeActiveDropdown();
@@ -140,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function resetColumnFilter(col) {
         activeFilters[col] = [];
-        const dropdown = document.querySelector(`.filterable-header[data-column="${col}"] .filter-dropdown`);
+        const dropdown = document.querySelector(`#peopleTable .filterable-header[data-column="${col}"] .filter-dropdown`);
         dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
         dropdown.querySelector('.filter-search').value = '';
         dropdown.querySelectorAll('.filter-option').forEach(opt => opt.style.display = 'flex');
@@ -148,9 +124,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function resetAllFilters() {
         columns.forEach(col => activeFilters[col] = []);
-        document.getElementById('globalSearch').value = '';
         globalSearchTerm = '';
-        document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+        document.querySelectorAll('#peopleTable .filter-dropdown').forEach(dropdown => {
             dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             dropdown.querySelector('.filter-search').value = '';
             dropdown.querySelectorAll('.filter-option').forEach(opt => opt.style.display = 'flex');
@@ -158,14 +133,10 @@ document.addEventListener('DOMContentLoaded', function() {
         closeActiveDropdown();
         filterTable();
     }
-    // Global search
-    document.getElementById('globalSearch').addEventListener('input', function() {
-        globalSearchTerm = this.value.toLowerCase().trim();
-        filterTable();
-    });
-    document.getElementById('resetAllFilters').addEventListener('click', resetAllFilters);
-    document.querySelectorAll('.filterable-header').forEach(header => {
+    // No global search or resetAllFilters button in this page
+    document.querySelectorAll('#peopleTable .filterable-header').forEach(header => {
         header.addEventListener('click', function(e) {
+            e.stopPropagation();
             if (e.target.closest('.filter-dropdown')) return;
             const col = this.getAttribute('data-column');
             toggleFilterDropdown(col);
@@ -183,10 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalCount').textContent = totalCount;
         document.getElementById('visibleCount').textContent = visible;
     }
-    // Emergency contact column is a combo of two fields
-    // Already handled in data extraction
     // Initial render
     populateFilterOptions();
     renderTable(data);
     updateRecordCount();
-});
+};

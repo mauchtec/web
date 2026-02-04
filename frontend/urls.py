@@ -1,9 +1,11 @@
-
 from django.urls import path
 from . import views
 
+from .views import ajax_link_person_to_unit
+
 urlpatterns = [
     path('gatecore/people/', views.gatecore_people, name='gatecore_people'),
+    path('gatecore/people-multi-residence/', views.gatecore_people_multi_residence, name='gatecore_people_multi_residence'),
     path('gatecore/people/<uuid:person_id>/', views.gatecore_person_detail, name='gatecore_person_detail'),
     path('', views.frontend_index, name='frontend_index'),
     path('gatecore/', views.gatecore_dashboard, name='gatecore_dashboard'),
@@ -27,4 +29,9 @@ urlpatterns = [
     path('gatecore/access-permissions/<uuid:perm_id>/', views.gatecore_access_permission_detail, name='gatecore_access_permission_detail'),
     path('gatecore/blacklist/', views.gatecore_blacklist, name='gatecore_blacklist'),
     path('gatecore/blacklist/<uuid:entry_id>/', views.gatecore_blacklist_detail, name='gatecore_blacklist_detail'),
+    path('gatecore/estate-people/', views.gatecore_estate_people, name='gatecore_estate_people'),
+    path('gatecore/ajax/add-person/', views.ajax_add_person, name='ajax_add_person'),
+    path('gatecore/ajax/update-person/<uuid:person_id>/', views.ajax_update_person, name='ajax_update_person'),
+    path('gatecore/ajax/reallocate-person/', views.ajax_reallocate_person, name='ajax_reallocate_person'),
+    path('gatecore/ajax/link-person-to-unit/', ajax_link_person_to_unit, name='ajax_link_person_to_unit'),
 ]
