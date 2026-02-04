@@ -1,26 +1,32 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Workflow Builder{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body { background: #f5f7fa; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; }
-        .navbar { background: linear-gradient(90deg, #6366f1, #3b82f6); color: #fff; padding: 0 32px; height: 60px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(59,130,246,0.08); }
-        .navbar .logo { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; margin-right: 32px; }
-        .navbar .menu { display: flex; gap: 24px; }
-        .navbar .menu a { color: #fff; text-decoration: none; font-weight: 500; font-size: 1rem; transition: color 0.2s; }
-        .navbar .menu a:hover { color: #dbeafe; }
-        .navbar .user { margin-left: auto; font-size: 1rem; font-weight: 500; }
-        .content { min-height: 80vh; }
-        .footer { background: #f3f4f6; color: #64748b; text-align: center; padding: 18px 0; font-size: 0.98rem; border-top: 1px solid #e5e7eb; }
+        .navbar { background: linear-gradient(90deg, #6366f1, #3b82f6); color: #fff; padding: 0 32px; height: 64px; display: flex; align-items: center; box-shadow: 0 4px 16px rgba(59,130,246,0.10); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+        .navbar .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1.5px; margin-right: 36px; display: flex; align-items: center; gap: 10px; }
+        .navbar .logo img { height: 32px; width: 32px; border-radius: 8px; margin-right: 8px; }
+        .navbar .menu { display: flex; gap: 28px; }
+        .navbar .menu a { color: #fff; text-decoration: none; font-weight: 500; font-size: 1.05rem; transition: color 0.2s; padding: 4px 10px; border-radius: 6px; }
+        .navbar .menu a:hover { color: #dbeafe; background: rgba(99,102,241,0.12); }
+        .navbar .user { margin-left: auto; font-size: 1.05rem; font-weight: 500; }
+        .content { min-height: 80vh; padding-top: 24px; }
+        .footer { background: linear-gradient(90deg, #e0e7ef, #f3f4f6); color: #64748b; text-align: center; padding: 22px 0; font-size: 1.05rem; border-top: 1px solid #e5e7eb; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-shadow: 0 -2px 8px rgba(99,102,241,0.04); }
     </style>
     {% block head %}{% endblock %}
 </head>
 <body>
     <nav class="navbar">
-        <span class="logo"><i class="fa-solid fa-cubes"></i> AccessControll</span>
+        <span class="logo">
+            <img src="{% static 'frontend/logo.png' %}" alt="Logo" />
+            <i class="fa-solid fa-cubes"></i> AccessControll
+        </span>
         <div class="menu">
             <a href="/builder/">Builder</a>
             <a href="/workflows/">Workflows</a>
@@ -33,7 +39,8 @@
         {% block content %}{% endblock %}
     </div>
     <footer class="footer">
-        &copy; {{ year|default:2026 }} AccessControll &mdash; Professional Workflow Platform
+        &copy; {{ year|default:2026 }} <b>AccessControll</b> &mdash; Professional Workflow Platform<br>
+        <span style="font-size:0.95em;">Made with <i class="fa-solid fa-heart" style="color:#ef4444;"></i> for secure, modern access control.</span>
     </footer>
     {% block scripts %}{% endblock %}
 </body>

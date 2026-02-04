@@ -2,31 +2,145 @@
 {% block title %}Workflow Builder{% endblock %}
 {% block head %}
     <style>
-        .builder-container { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); padding: 32px; display: flex; gap: 32px; }
-        .component-list { width: 320px; background: #f9fafb; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-        .component-list h2 { font-size: 1.2rem; margin-bottom: 16px; color: #374151; }
-        .component-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; margin-bottom: 12px; cursor: grab; display: flex; align-items: center; gap: 12px; transition: box-shadow 0.2s; }
-        .component-item:hover { box-shadow: 0 2px 8px rgba(59,130,246,0.08); }
+        :root {
+            --primary-bg: #fff;
+            --secondary-bg: #f9fafb;
+            --canvas-bg: #f3f4f6;
+            --card-bg: #fff;
+            --card-border: #e5e7eb;
+            --input-bg: #fff;
+            --input-border: #e5e7eb;
+            --input-text: #1e293b;
+            --preview-bg: #f3f4f6;
+            --preview-border: #e5e7eb;
+            --preview-text: #1e293b;
+            --primary-text: #1e293b;
+            --secondary-text: #374151;
+            --accent: #6366f1;
+        }
+        [data-theme="dark"] {
+            --primary-bg: #18181b;
+            --secondary-bg: #232336;
+            --canvas-bg: #1e1e2e;
+            --card-bg: #232336;
+            --card-border: #373757;
+            --input-bg: #232336;
+            --input-border: #373757;
+            --input-text: #e0e7ef;
+            --preview-bg: #232336;
+            --preview-border: #373757;
+            --preview-text: #e0e7ef;
+            --primary-text: #e0e7ef;
+            --secondary-text: #a5b4fc;
+            --accent: #6366f1;
+        }
+        body { background: var(--primary-bg); color: var(--primary-text); }
+        .builder-container { max-width: 1500px; margin: 40px auto; background: var(--primary-bg); border-radius: 16px; box-shadow: 0 6px 32px rgba(0,0,0,0.10); padding: 48px; display: flex; gap: 48px; }
+        @media (max-width: 900px) {
+            .builder-container { flex-direction: column; gap: 0; padding: 20px; }
+            .component-list { width: 100%; min-width: 0; margin-bottom: 28px; max-height: 360px; overflow-y: auto; }
+            .canvas-area { min-height: 500px; padding: 18px; width: 100%; min-width: 0; }
+        }
+        @media (max-width: 600px) {
+            .builder-container { max-width: 100vw; margin: 0; border-radius: 0; box-shadow: none; }
+            .component-list, .canvas-area { border-radius: 0; box-shadow: none; padding: 10px; width: 100%; min-width: 0; }
+            .component-list h2 { font-size: 1.15rem; }
+            .canvas-step { padding: 16px; font-size: 1.05em; }
+            .save-btn { font-size: 1.1em; padding: 14px 24px; }
+            .component-list { max-height: 260px; overflow-y: auto; }
+        }
+        .component-list { width: 400px; background: var(--secondary-bg); border-radius: 14px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .component-list h2 { font-size: 1.35rem; margin-bottom: 22px; color: var(--secondary-text); }
+        .component-item { background: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: 12px; padding: 22px 28px; margin-bottom: 18px; cursor: grab; display: flex; align-items: center; gap: 18px; transition: box-shadow 0.2s, transform 0.2s; font-size: 1em; }
+        .component-item:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.14); transform: scale(1.05); }
+        .component-item.dragging { box-shadow: 0 12px 32px rgba(99,102,241,0.22); transform: scale(1.10); opacity: 0.90; z-index: 10; }
         .component-icon { font-size: 1.3rem; }
-        .component-label { font-weight: 600; color: #1e293b; }
-        .canvas-area { flex: 1; min-height: 600px; background: #f3f4f6; border-radius: 10px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .canvas-dropzone { min-height: 400px; border: 2px dashed #a5b4fc; border-radius: 10px; background: #fff; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
-        .canvas-dropzone.dragover { background: #e0e7ff; }
-        .canvas-step { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px; margin-bottom: 10px; position: relative; }
-        .canvas-step .remove-btn { position: absolute; top: 10px; right: 10px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 0.9rem; }
+        .component-label { font-weight: 700; color: var(--primary-text); font-size: 1em; }
+        .canvas-area { flex: 1;
+            min-height: 700px;
+            background: var(--canvas-bg);
+            border-radius: 14px;
+            padding: 40px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 32px;
+            align-self: flex-start;
+            z-index: 10;
+        }
+        .component-list-search {
+            width: 100%;
+            margin-bottom: 18px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1.5px solid var(--card-border);
+            font-size: 1em;
+            background: var(--input-bg);
+            color: var(--input-text);
+        }
+        .canvas-dropzone { min-height: 500px; border: 2.5px dashed var(--accent); border-radius: 14px; background: var(--card-bg); padding: 40px; display: flex; flex-direction: column; gap: 28px; }
+        .canvas-dropzone.dragover { background: linear-gradient(90deg, #e0e7ff 60%, var(--canvas-bg) 100%); box-shadow: 0 0 0 6px #a5b4fc33; transition: background 0.3s, box-shadow 0.3s; }
+        .canvas-step { background: var(--secondary-bg); border: 1.5px solid var(--card-border); border-radius: 12px; padding: 28px; margin-bottom: 16px; position: relative; font-size: 1.13em; color: var(--primary-text); }
+        .canvas-step .remove-btn { position: absolute; top: 14px; right: 14px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 1em; }
         .canvas-step .remove-btn:hover { background: #fecaca; }
-        .preview-area { margin-top: 32px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); padding: 24px; }
-        .save-btn { margin-top: 24px; background: linear-gradient(135deg, #6366f1, #3b82f6); color: #fff; border: none; border-radius: 8px; padding: 14px 32px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .save-btn:hover { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+        .preview-area {
+            background: var(--preview-bg);
+            color: var(--preview-text);
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            padding: 40px;
+            border: 1.5px solid var(--preview-border);
+        }
+        .save-btn { margin-top: 32px; background: linear-gradient(135deg, var(--accent), #3b82f6); color: #fff; border: none; border-radius: 12px; padding: 20px 44px; font-size: 1.25rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        .save-btn:hover { background: linear-gradient(135deg, #3b82f6, var(--accent)); }
+        .theme-switcher { position: absolute; top: 18px; right: 32px; z-index: 100; }
+        .theme-btn { background: var(--secondary-bg); color: var(--primary-text); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 18px; font-size: 1.05em; cursor: pointer; transition: background 0.2s, color 0.2s; }
+        .theme-btn:hover { background: var(--accent); color: #fff; }
+        .component-item input,
+        .component-item textarea,
+        .component-item select {
+            background: var(--input-bg);
+            color: var(--input-text);
+            border: 1.5px solid var(--input-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 1em;
+        }
+        .component-preview,
+        .signature-pad,
+        .photo-preview {
+            background: var(--preview-bg) !important;
+            color: var(--preview-text);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 4px rgba(99,102,241,0.07);
+            border: 1.5px solid var(--preview-border);
+        }
+        /* Add this to the style block for dark mode preview backgrounds */
+        [data-theme="dark"] .component-preview,
+        [data-theme="dark"] .signature-pad,
+        [data-theme="dark"] .photo-preview {
+            background: var(--preview-bg) !important;
+            color: var(--preview-text) !important;
+        }
+        [data-theme="dark"] .preview-area {
+            background: var(--preview-bg) !important;
+            color: var(--preview-text) !important;
+        }
+        [data-theme="dark"] .element-style-preview {
+            background: var(--preview-bg) !important;
+            color: var(--preview-text) !important;
+        }
     </style>
 {% endblock %}
 {% block content %}
 <div class="builder-container">
+    <button class="theme-btn theme-switcher" onclick="toggleTheme()">Switch Theme</button>
     <div class="component-list">
         <h2 style="display:flex;align-items:center;justify-content:space-between;">
             <span>Components</span>
             <button id="reloadComponentsBtn" style="background:#e0e7ef;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:0.95em;">Reload</button>
         </h2>
+        <input id="componentSearch" class="component-list-search" type="text" placeholder="Search components..." oninput="filterComponentList()" />
         <div id="componentList"></div>
         <div id="componentDebug" style="margin-top:18px;font-size:0.95em;color:#64748b;"></div>
     </div>
@@ -50,7 +164,7 @@ async function fetchComponents() {
     return data.components;
 }
 
-// Render component list
+// Render component list with drag animation
 function renderComponentList(components) {
     const list = document.getElementById('componentList');
     list.innerHTML = '';
@@ -59,9 +173,18 @@ function renderComponentList(components) {
         item.className = 'component-item';
         item.draggable = true;
         item.dataset.type = comp.type;
-        item.innerHTML = `<span class="component-icon">${comp.icon}</span> <span class="component-label">${comp.label}</span>`;
+        item.innerHTML = `
+            <span class="component-icon">${comp.icon}</span> <span class="component-label">${comp.label}</span>
+            <div class="component-preview" style="margin-top:10px; background:#f3f4f6; border-radius:8px; padding:10px; box-shadow:0 1px 4px rgba(99,102,241,0.07);">
+                ${comp.html_preview}
+            </div>
+        `;
         item.addEventListener('dragstart', e => {
             e.dataTransfer.setData('componentType', comp.type);
+            setTimeout(() => item.classList.add('dragging'), 0);
+        });
+        item.addEventListener('dragend', e => {
+            item.classList.remove('dragging');
         });
         list.appendChild(item);
     });
@@ -107,10 +230,82 @@ function renderCanvas() {
             <button class='remove-btn' onclick='removeStep(${idx})'>Remove</button>
             <button style="margin-left:8px;" onclick='moveStep(${idx}, -1)' ${idx === 0 ? 'disabled' : ''} title="Move Up">&#8593;</button>
             <button style="margin-left:4px;" onclick='moveStep(${idx}, 1)' ${idx === workflowSteps.length-1 ? 'disabled' : ''} title="Move Down">&#8595;</button>
+            <button style="margin-left:8px;background:#e0e7ef;color:#374151;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.95em;" onclick='editStep(${idx})'>Edit</button>
+            <div id="edit-form-${idx}" style="display:none;margin-top:12px;"></div>
         `;
         dropzone.appendChild(div);
     });
 }
+
+async function editStep(idx) {
+    const step = workflowSteps[idx];
+    const comp = (await fetchComponents()).find(c => c.type === step.type);
+    if (!comp) return;
+    const formDiv = document.getElementById(`edit-form-${idx}`);
+    if (!formDiv) return;
+    // Build form HTML
+    let formHtml = '<form onsubmit="return false;">';
+    comp.fields.forEach(field => {
+        const value = step.props[field.name] ?? '';
+        formHtml += `<div style='margin-bottom:10px;'>`;
+        formHtml += `<label style='font-weight:500;color:#374151;'>${field.label}:</label><br>`;
+        if (field.type === 'text' || field.type === 'number') {
+            formHtml += `<input type='${field.type}' name='${field.name}' value='${value}' style='width:90%;padding:6px;border-radius:6px;border:1px solid #e5e7eb;' ${field.required?'required':''}>`;
+        } else if (field.type === 'textarea') {
+            formHtml += `<textarea name='${field.name}' style='width:90%;padding:6px;border-radius:6px;border:1px solid #e5e7eb;' ${field.required?'required':''}>${value}</textarea>`;
+        } else if (field.type === 'select' && field.options) {
+            formHtml += `<select name='${field.name}' style='width:92%;padding:6px;border-radius:6px;border:1px solid #e5e7eb;' ${field.required?'required':''}>`;
+            field.options.forEach(opt => {
+                formHtml += `<option value='${opt}' ${value==opt?'selected':''}>${opt}</option>`;
+            });
+            formHtml += `</select>`;
+        } else if (field.type === 'checkbox') {
+            formHtml += `<input type='checkbox' name='${field.name}' ${value?'checked':''}>`;
+        }
+        formHtml += `<span class='error-message' style='color:#ef4444;font-size:0.95em;display:none;margin-left:8px;'></span>`;
+        formHtml += `</div>`;
+    });
+    formHtml += `<button type='submit' style='background:#6366f1;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:1em;cursor:pointer;'>Save</button> `;
+    formHtml += `<button type='button' style='background:#e5e7eb;color:#374151;border:none;border-radius:6px;padding:6px 18px;font-size:1em;cursor:pointer;margin-left:8px;' onclick='closeEditForm(${idx})'>Cancel</button>`;
+    formHtml += '</form>';
+    formDiv.innerHTML = formHtml;
+    formDiv.style.display = 'block';
+    // Save handler
+    formDiv.querySelector('form').onsubmit = function() {
+        let valid = true;
+        comp.fields.forEach(field => {
+            let val;
+            const input = formDiv.querySelector(`[name='${field.name}']`);
+            const errorSpan = input.parentElement.querySelector('.error-message');
+            if (field.type === 'checkbox') {
+                val = input.checked;
+            } else {
+                val = input.value;
+                if (field.type === 'number') val = Number(val);
+            }
+            // Validation for required fields
+            if (field.required && (val === '' || val === null || (field.type === 'number' && isNaN(val)))) {
+                errorSpan.textContent = 'Required';
+                errorSpan.style.display = 'inline';
+                valid = false;
+            } else {
+                errorSpan.textContent = '';
+                errorSpan.style.display = 'none';
+            }
+            step.props[field.name] = val;
+        });
+        if (!valid) return false;
+        formDiv.style.display = 'none';
+        renderCanvas();
+        updatePreview();
+    };
+}
+
+function closeEditForm(idx) {
+    const formDiv = document.getElementById(`edit-form-${idx}`);
+    if (formDiv) formDiv.style.display = 'none';
+}
+
 
 function moveStep(idx, direction) {
     const newIndex = idx + direction;
@@ -129,13 +324,39 @@ function removeStep(idx) {
 }
 
 async function updatePreview() {
+    // Defensive: support both definition.components and definition.steps
+    let components = null;
+    // Try to get from workflowSteps (builder state)
+    if (Array.isArray(workflowSteps)) {
+        components = workflowSteps;
+    }
+    // If not, try to get from definition (for future extensibility)
+    // (You can add more shapes here if needed)
+    if (!components || !Array.isArray(components)) {
+        document.getElementById('livePreview').innerHTML = '<span style="color:#64748b;">Invalid workflow definition.</span>';
+        return;
+    }
     const res = await fetch('/api/v1/preview/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ components: workflowSteps })
+        body: JSON.stringify({ components })
     });
-    const data = await res.json();
+    if (!res.ok) {
+        document.getElementById('livePreview').innerHTML = '<span style="color:#ef4444;">Preview failed.</span>';
+        return;
+    }
+    let data = null;
+    try {
+        data = await res.json();
+    } catch (e) {
+        document.getElementById('livePreview').innerHTML = '<span style="color:#ef4444;">Preview response error.</span>';
+        return;
+    }
+    if (!data || typeof data.html !== 'string') {
+        document.getElementById('livePreview').innerHTML = '<span style="color:#ef4444;">No preview available.</span>';
+        return;
+    }
     document.getElementById('livePreview').innerHTML = data.html;
 }
 
@@ -203,13 +424,44 @@ if (window.location.hash.length > 1) {
 }
 
 // Init
-function loadAndRenderComponents() {
-    fetchComponents().then(renderComponentList);
+let allComponents = [];
+
+async function fetchAndRenderComponents() {
+    allComponents = await fetchComponents();
+    renderComponentList(allComponents);
 }
-loadAndRenderComponents();
+
+function filterComponentList() {
+    const search = document.getElementById('componentSearch').value.toLowerCase();
+    const filtered = allComponents.filter(c =>
+        c.label.toLowerCase().includes(search) ||
+        (c.description && c.description.toLowerCase().includes(search))
+    );
+    renderComponentList(filtered);
+}
+
+// On page load
+fetchAndRenderComponents();
 
 document.getElementById('reloadComponentsBtn').addEventListener('click', function() {
-    loadAndRenderComponents();
+    fetchAndRenderComponents();
 });
+
+// Theme switcher logic
+function toggleTheme() {
+    const html = document.documentElement;
+    if (html.getAttribute('data-theme') === 'dark') {
+        html.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+    }
+}
+// On load, set theme from localStorage
+(function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
 </script>
 {% endblock %}

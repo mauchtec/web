@@ -1373,6 +1373,16 @@ HTML_EXAMPLE_WORKFLOWS = {
 }
 
 # Register component instances at module load
+DATETIME_PICKER = register_html_component(DateTimePickerComponent())
+PHOTO_CAPTURE = register_html_component(PhotoCaptureComponent())
+SIGNATURE_PAD = register_html_component(SignaturePadComponent())
+BADGE_QR_DISPLAY = register_html_component(BadgeQRDisplayComponent())
+GATE_ZONE_SELECTOR = register_html_component(GateZoneSelectorComponent())
+ACCESS_REASON = register_html_component(AccessReasonComponent())
+HOST_SELECTION = register_html_component(HostSelectionComponent())
+VEHICLE_TYPE_SELECTOR = register_html_component(VehicleTypeSelectorComponent())
+TERMS_CHECKBOX = register_html_component(TermsCheckboxComponent())
+CUSTOM_INFO_DISPLAY = register_html_component(CustomInfoDisplayComponent())
 ID_CARD = register_html_component(IDCardComponent())
 VEHICLE_CARD = register_html_component(VehicleCardComponent())
 PIN_CARD = register_html_component(PINCardComponent())

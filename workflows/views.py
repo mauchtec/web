@@ -76,6 +76,8 @@ def get_workflow(request, workflow_id):
 		return Response({"error": "Unknown action."}, status=400)
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
+@authentication_classes([])
 def list_components(request):
 	"""List all available HTML workflow components."""
 	return JsonResponse({"components": get_all_html_component_templates()})
