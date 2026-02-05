@@ -23,7 +23,8 @@ urlpatterns = [
     path('gatecore/access-logs/<uuid:log_id>/', views.gatecore_access_log_detail, name='gatecore_access_log_detail'),
     path('gatecore/guest-registrations/', views.gatecore_guest_registrations, name='gatecore_guest_registrations'),
     path('gatecore/guest-registrations/<uuid:guest_id>/', views.gatecore_guest_registration_detail, name='gatecore_guest_registration_detail'),
-    path('gatecore/schedule-rules/', views.gatecore_schedule_rules, name='gatecore_schedule_rules'),
+    path('gatecore/schedule-rules/', views.schedule_rules_list_ui, name='gatecore_schedule_rules'),
+    path('gatecore/schedule-create/', views.schedule_create_ui, name='schedule_create_ui'),
     path('gatecore/schedule-rules/<uuid:rule_id>/', views.gatecore_schedule_rule_detail, name='gatecore_schedule_rule_detail'),
     path('gatecore/access-permissions/', views.gatecore_access_permissions, name='gatecore_access_permissions'),
     path('gatecore/access-permissions/<uuid:perm_id>/', views.gatecore_access_permission_detail, name='gatecore_access_permission_detail'),
@@ -34,4 +35,6 @@ urlpatterns = [
     path('gatecore/ajax/update-person/<uuid:person_id>/', views.ajax_update_person, name='ajax_update_person'),
     path('gatecore/ajax/reallocate-person/', views.ajax_reallocate_person, name='ajax_reallocate_person'),
     path('gatecore/ajax/link-person-to-unit/', ajax_link_person_to_unit, name='ajax_link_person_to_unit'),
+    path('get-units-json/', views.get_units_json, name='get_units_json'),
+    path('get-people-json/', views.get_people_json, name='get_people_json'),
 ]

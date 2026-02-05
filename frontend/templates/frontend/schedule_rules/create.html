@@ -1,0 +1,179 @@
+{% extends "frontend/base.html" %}
+{% load static %}
+{% block title %}Create Schedule{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.schedule-container { max-width: 480px; margin: 32px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); padding: 18px; font-size: 0.95em; }
+.schedule-header { font-size: 1.15rem; font-weight: 700; margin-bottom: 18px; color: #6366f1; }
+.schedule-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 0.95em; }
+.schedule-table th, .schedule-table td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.schedule-table th { background: #f3f4f6; color: #374151; font-weight: 600; }
+.schedule-table tr:last-child td { border-bottom: none; }
+.add-schedule-btn { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 1em; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.add-schedule-btn:hover { background: #3b82f6; }
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background: rgba(59,130,246,0.13); }
+.modal-content { background: #fff; margin: 40px auto; padding: 18px; border-radius: 12px; max-width: 600px; box-shadow: 0 4px 16px rgba(99,102,241,0.13); position: relative; font-size: 0.95em; }
+.close { position: absolute; top: 10px; right: 14px; font-size: 1.2em; color: #6366f1; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 4px; color: #374151; font-size: 0.97em; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 0.97em; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.save-btn { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 0.97em; font-weight: 600; cursor: pointer; }
+.save-btn:hover { background: #3b82f6; }
+.cancel-btn { background: #e5e7eb; color: #374151; border: none; border-radius: 8px; padding: 7px 16px; font-size: 0.97em; font-weight: 600; cursor: pointer; }
+.cancel-btn:hover { background: #cbd5e1; }
+.form-group select { min-width: 0; }
+.form-group input[type="checkbox"] { width: auto; }
+.form-group label.inline { display: inline-block; margin-right: 10px; font-weight: 400; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="people-container">
+    <header>
+        <h2>Schedule Rules</h2>
+        <p class="subtitle">All schedule rules for residents and visitors</p>
+    </header>
+    <div class="controls">
+        <!-- Optionally add search/filter controls here in the future -->
+        <button class="add-schedule-btn" id="openModalBtn"><i class="fa fa-plus"></i> Add Schedule</button>
+    </div>
+    <div class="table-container" id="scheduleTableContainer"></div>
+</div>
+<div id="scheduleModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModalBtn">&times;</span>
+        <form id="scheduleForm">
+            <!-- Resident dropdown replaces name field -->
+            <div class="form-row">
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="unit">Unit</label>
+                    <select id="unit" name="unit"></select>
+                </div>
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="resident">Resident</label>
+                    <select id="resident" name="resident"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="recurType">Repeat</label>
+                    <select id="recurType" name="recur_type">
+                        <option value="none">No Repeat</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="recurUntil">Repeat Until</label>
+                    <input type="date" id="recurUntil" name="recur_until" placeholder="mm/dd/yyyy">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="scheduleType">Type</label>
+                    <select id="scheduleType" name="schedule_type" required>
+                        <option value="schedule">Schedule</option>
+                        <option value="preclearance">Preclearance (PIN)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="reason">Reason</label>
+                    <select id="reason" name="reason">
+                        <option value="guest">Guest</option>
+                        <option value="delivery">Delivery</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="contractor">Contractor</option>
+                        <option value="family">Family</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" id="reasonOtherGroup" style="display:none;">
+                <label for="reasonOther">Other Reason</label>
+                <input type="text" id="reasonOther" name="reason_other">
+            </div>
+            <div class="form-row" style="display:flex; gap:24px;">
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label for="visitorFullName">Visitor Full Name</label>
+                    <input type="text" id="visitorFullName" name="visitor_full_name">
+                </div>
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label for="visitorEmail">Visitor Email</label>
+                    <input type="email" id="visitorEmail" name="visitor_email">
+                </div>
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label for="visitorMobile">Visitor Mobile</label>
+                    <input type="text" id="visitorMobile" name="visitor_mobile">
+                </div>
+            </div>
+            <div class="form-row" style="display:flex; gap:32px; align-items:flex-end;">
+                <div class="form-group" style="flex:1; min-width:180px;">
+                    <label for="validFrom">Valid From</label>
+                    <input type="date" id="validFrom" name="valid_from" required placeholder="mm/dd/yyyy">
+                </div>
+                <div class="form-group" id="validUntilGroup" style="flex:1; min-width:180px;">
+                    <label for="validUntil">Valid Until</label>
+                    <input type="date" id="validUntil" name="valid_until" placeholder="mm/dd/yyyy">
+                </div>
+                <div class="form-group" style="flex:1; min-width:120px;">
+                    <label for="isActive">Active</label>
+                    <select id="isActive" name="is_active">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label for="daysAllowed">Days Allowed</label>
+                    <select id="daysAllowed" name="days_allowed">
+                        <option value="weekdays">Weekdays</option>
+                        <option value="workdays">Workdays</option>
+                        <option value="weekends">Weekends</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group" id="daysCheckboxes" style="width:49%;display:inline-block;vertical-align:top;">
+                    <label>Days:</label><br>
+                    <label class="inline"><input type="checkbox" name="monday" id="monday"> Mon</label>
+                    <label class="inline"><input type="checkbox" name="tuesday" id="tuesday"> Tue</label>
+                    <label class="inline"><input type="checkbox" name="wednesday" id="wednesday"> Wed</label>
+                    <label class="inline"><input type="checkbox" name="thursday" id="thursday"> Thu</label>
+                    <label class="inline"><input type="checkbox" name="friday" id="friday"> Fri</label>
+                    <label class="inline"><input type="checkbox" name="saturday" id="saturday"> Sat</label>
+                    <label class="inline"><input type="checkbox" name="sunday" id="sunday"> Sun</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Audit Info</label>
+                <div style="font-size:0.95em;color:#6b7280;">
+                    <span id="createdByInfo"></span>
+                    <span id="modifiedByInfo"></span>
+                    <span id="modifiedAtInfo"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="excludeHolidays">Exclude Holidays</label>
+                <input type="checkbox" id="excludeHolidays" name="exclude_holidays" checked>
+            </div>
+            <div class="form-group">
+                <label for="notifyResident">Notify Resident</label>
+                <input type="checkbox" id="notifyResident" name="notify_resident">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" id="cancelModalBtn">Cancel</button>
+                <button type="submit" class="save-btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="{% static 'frontend/schedule_create.js' %}"></script>
+<script src="{% static 'frontend/schedule_table.js' %}"></script>
+{% endblock %}

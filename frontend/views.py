@@ -1,11 +1,58 @@
 
-from django.views.decorators.http import require_POST
+# All imports at the top
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from GateCore.models import Site, Property, Unit, Person, Vehicle, AccessPoint, AccessDevice, AccessCredential, AccessLog, GuestRegistration, ScheduleRule, AccessPermission, Blacklist, Occupancy
 from django.db.models import Count
 import django.db.models as models
+
+# API: Return JSON list of units for dropdown
+@login_required
+def get_units_json(request):
+    units = Unit.objects.select_related('property__site').filter(
+        property__site__site_type='estate'
+    ).order_by('property__site__name', 'property__name', 'unit_code')
+    unit_list = []
+    for unit in units:
+        unit_list.append({
+            'id': str(unit.id),
+            'text': f"{unit.property.site.name} - {unit.property.name} - {unit.unit_code}",
+            'property_name': unit.property.name,
+            'unit_code': unit.unit_code
+        })
+    return JsonResponse({'results': unit_list})
+
+# API: Return JSON list of people for dropdown (optionally filtered by unit)
+@login_required
+def get_people_json(request):
+    unit_id = request.GET.get('unit')
+    if unit_id:
+        # Only people with active, non-deleted occupancy in this unit
+        people = Person.objects.filter(
+            occupancies__unit_id=unit_id,
+            occupancies__is_active=True,
+            occupancies__is_deleted=False
+        ).order_by('last_name', 'first_name').distinct()
+    else:
+        people = Person.objects.all().order_by('last_name', 'first_name')
+    people_list = []
+    for person in people:
+        people_list.append({
+            'id': str(person.id),
+            'text': f"{person.last_name}, {person.first_name}",
+            'first_name': person.first_name,
+            'last_name': person.last_name,
+            'email': person.email,
+            'phone': person.phone
+        })
+    return JsonResponse({'results': people_list})
+
+# Professional schedule creation UI
+@login_required
+def schedule_create_ui(request):
+    return render(request, "frontend/schedule_rules/create.html")
 
 # People linked to multiple residences
 @login_required
@@ -282,11 +329,11 @@ def gatecore_guest_registration_detail(request, guest_id):
     guest = get_object_or_404(GuestRegistration.objects.select_related('person', 'unit'), id=guest_id)
     return render(request, "frontend/gatecore_guest_registration_detail.html", {"guest": guest})
 
-# GateCore schedule rules list
+
+# Schedule rules CRUD UI (AJAX)
 @login_required
-def gatecore_schedule_rules(request):
-    rules = ScheduleRule.objects.all()
-    return render(request, "frontend/gatecore_schedule_rules.html", {"rules": rules})
+def schedule_rules_list_ui(request):
+    return render(request, "frontend/schedule_rules/list.html")
 
 # GateCore schedule rule detail
 @login_required

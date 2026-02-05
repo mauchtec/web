@@ -1,0 +1,54 @@
+{% extends 'frontend/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Schedule Rules</h2>
+    <button id="add-schedule-btn" class="btn btn-primary mb-3">Add Schedule Rule</button>
+    <table class="table table-bordered" id="schedule-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Schedule rules will be loaded here by AJAX -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal for Add/Edit -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="scheduleModalLabel">Add/Edit Schedule Rule</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="schedule-form">
+          <input type="hidden" id="schedule-id">
+          <div class="mb-3">
+            <label for="schedule-name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="schedule-name" required>
+          </div>
+          <div class="mb-3">
+            <label for="schedule-type" class="form-label">Type</label>
+            <input type="text" class="form-control" id="schedule-type" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="schedule-active">
+            <label class="form-check-label" for="schedule-active">Active</label>
+          </div>
+          <button type="submit" class="btn btn-success">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/frontend/schedule_rules.js"></script>
+{% endblock %}

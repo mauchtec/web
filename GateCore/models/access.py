@@ -121,6 +121,19 @@ class AccessCredential(BaseModel):
         return input_value == self.credential_value
 
 class ScheduleRule(BaseModel):
+    RECUR_CHOICES = [
+        ('none', 'No Repeat'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+    ]
+
+    recur_type = models.CharField(max_length=20, choices=RECUR_CHOICES, default='none')
+    recur_until = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_schedules')
+    modified_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='modified_schedules')
+    modified_at = models.DateTimeField(auto_now=True)
     SCHEDULE_TYPES = [
         ("24x7", "24/7 Access"),
         ("business_hours", "Business Hours"),
@@ -128,10 +141,44 @@ class ScheduleRule(BaseModel):
         ("weekdays", "Weekdays Only"),
         ("weekends", "Weekends Only"),
     ]
+
+    TYPE_CHOICES = [
+        ('preclearance', 'Preclearance'),
+        ('schedule', 'Schedule'),
+    ]
+
+    REASON_CHOICES = [
+        ('guest', 'Guest'),
+        ('delivery', 'Delivery'),
+        ('maintenance', 'Maintenance'),
+        ('contractor', 'Contractor'),
+        ('family', 'Family'),
+        ('other', 'Other'),
+    ]
+
+    DAYS_CHOICES = [
+        ('weekdays', 'Weekdays'),
+        ('workdays', 'Workdays'),
+        ('weekends', 'Weekends'),
+        ('custom', 'Custom'),
+    ]
+
     name = models.CharField(max_length=100)
+    unit = models.ForeignKey('Unit', on_delete=models.SET_NULL, null=True, blank=True)
+    visitor = models.ForeignKey('Person', on_delete=models.SET_NULL, null=True, blank=True)
     schedule_type = models.CharField(max_length=30, choices=SCHEDULE_TYPES, default="custom")
+    schedule_kind = models.CharField(max_length=20, choices=TYPE_CHOICES, default='schedule')
     start_time = models.TimeField(default="00:00")
     end_time = models.TimeField(default="23:59")
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES, default='guest')
+    reason_other = models.CharField(max_length=100, blank=True)
+    visitor_full_name = models.CharField(max_length=100, blank=True)
+    visitor_email = models.EmailField(blank=True)
+    visitor_mobile = models.CharField(max_length=20, blank=True)
+    pin = models.CharField(max_length=10, blank=True)
+    valid_from = models.DateField(default=timezone.now)
+    valid_until = models.DateField(null=True, blank=True)
+    days_allowed = models.CharField(max_length=20, choices=DAYS_CHOICES, default='weekdays')
     monday = models.BooleanField(default=True)
     tuesday = models.BooleanField(default=True)
     wednesday = models.BooleanField(default=True)
@@ -139,13 +186,16 @@ class ScheduleRule(BaseModel):
     friday = models.BooleanField(default=True)
     saturday = models.BooleanField(default=True)
     sunday = models.BooleanField(default=True)
-    valid_from = models.DateField(default=timezone.now)
-    valid_until = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
     exclude_holidays = models.BooleanField(default=True)
+    notify_resident = models.BooleanField(default=False)
+
     class Meta:
         ordering = ['name']
+
     def __str__(self):
         return self.name
+
     def is_allowed_now(self):
         from django.utils import timezone
         now = timezone.now()
@@ -160,6 +210,16 @@ class ScheduleRule(BaseModel):
         if not (self.start_time <= now.time() <= self.end_time):
             return False
         return True
+
+    def save(self, *args, **kwargs):
+        if not self.pin:
+            import random
+            for _ in range(10):
+                candidate = str(random.randint(10000, 99999))
+                if not ScheduleRule.objects.filter(pin=candidate).exists():
+                    self.pin = candidate
+                    break
+        super().save(*args, **kwargs)
 
 class AccessPermission(BaseModel):
     person = models.ForeignKey(
@@ -342,8 +402,8 @@ class Blacklist(BaseModel):
         else:
             return f"Blacklisted: {self.target_type}"
     @property
-    def is_active(self):
+    def is_currently_active(self):
         from django.utils import timezone
         if self.blacklisted_until and timezone.now() > self.blacklisted_until:
             return False
-        return self.is_active and not self.is_deleted
+        return super().is_active and not self.is_deleted
