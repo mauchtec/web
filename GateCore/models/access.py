@@ -290,12 +290,24 @@ class AccessLog(BaseModel):
         ("granted", "Granted"),
         ("denied", "Denied"),
         ("expired", "Expired"),
+        ("expired_license", "Expired License/Disk"),
+        ("blocked", "Blocked Entity"),
         ("invalid", "Invalid Credential"),
         ("scheduled", "Outside Schedule"),
         ("limit", "Daily Limit Exceeded"),
         ("blacklisted", "Blacklisted"),
         ("error", "System Error"),
     ]
+    
+    ACCESS_METHOD_CHOICES = [
+        ("pin", "PIN"),
+        ("voice", "Voice Clearance"),
+        ("manual", "Manual Override"),
+        ("rfid", "RFID Card"),
+        ("biometric", "Biometric"),
+        ("qr", "QR Code"),
+    ]
+    
     person = models.ForeignKey(
         "Person",
         on_delete=models.SET_NULL,
@@ -321,14 +333,74 @@ class AccessLog(BaseModel):
         null=True,
         blank=True
     )
-    timestamp = models.DateTimeField(default=timezone.now)
+    
+    # Vehicle tracking
+    vehicle = models.ForeignKey(
+        'Vehicle',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="access_logs"
+    )
+    
+    # Entry/Exit tracking
+    # Note: 'timestamp' is kept for backward compatibility with existing code
+    # New code should use entry_time/exit_time for better clarity
+    timestamp = models.DateTimeField(default=timezone.now)  # Deprecated: use entry_time instead
+    entry_time = models.DateTimeField(null=True, blank=True)  # Preferred field for entry time
+    exit_time = models.DateTimeField(null=True, blank=True)
+    duration_minutes = models.IntegerField(null=True, blank=True)
+    
     result = models.CharField(max_length=20, choices=RESULT_CHOICES)
     reason = models.CharField(max_length=100, blank=True)
     credential_value_used = models.CharField(max_length=255, blank=True)
+    
+    # Access method tracking
+    access_method = models.CharField(
+        max_length=20,
+        choices=ACCESS_METHOD_CHOICES,
+        default="manual",
+        blank=True
+    )
+    
+    # PIN tracking (hashed)
+    pin_hash = models.CharField(max_length=64, blank=True)
+    
+    # Voice clearance
+    voice_clearance_granted_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="voice_clearances_granted"
+    )
+    voice_clearance_notes = models.TextField(blank=True)
+    
+    # Visiting information
+    visiting_tenant = models.ForeignKey(
+        'Tenant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="visitor_logs"
+    )
+    visiting_freeform = models.CharField(max_length=200, blank=True)
+    visit_purpose = models.CharField(max_length=200, blank=True)
+    
+    # Operator tracking (ForeignKey instead of CharField)
+    operator = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='access_logs_operated'
+    )
+    
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     session_id = models.CharField(max_length=100, blank=True)
     request_data = models.JSONField(default=dict, blank=True)
+    
     class Meta:
         ordering = ['-timestamp']
         indexes = [
@@ -336,9 +408,28 @@ class AccessLog(BaseModel):
             models.Index(fields=['person', 'timestamp']),
             models.Index(fields=['result', 'timestamp']),
             models.Index(fields=['device', 'timestamp']),
+            models.Index(fields=['vehicle', 'entry_time']),
+            models.Index(fields=['access_point', 'entry_time']),
+            models.Index(fields=['entry_time']),
+            models.Index(fields=['exit_time']),
+            models.Index(fields=['visiting_tenant']),
         ]
+    
     def __str__(self):
         return f"{self.timestamp} - {self.person or 'Unknown'} - {self.get_result_display()}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate duration on exit
+        if self.exit_time and self.entry_time:
+            delta = self.exit_time - self.entry_time
+            self.duration_minutes = int(delta.total_seconds() / 60)
+        
+        # Auto-populate entry_time from timestamp if not set
+        if not self.entry_time and self.timestamp:
+            self.entry_time = self.timestamp
+        
+        super().save(*args, **kwargs)
+
 
 class Blacklist(BaseModel):
     TARGET_TYPES = [

@@ -1,0 +1,6 @@
+Django>=4.2,<5.0
+djangorestframework>=3.14.0
+django-filter>=23.2
+django-cors-headers>=4.0.0
+drf-yasg>=1.21.0
+Pillow>=10.0.0

@@ -102,3 +102,34 @@ class Unit(BaseModel):
         if self.property:
             self.property.total_units = self.property.units.count()
             self.property.save(update_fields=['total_units'])
+
+
+class Tenant(BaseModel):
+    """People/companies being visited"""
+    
+    name = models.CharField(max_length=200)
+    company = models.CharField(max_length=200, blank=True)
+    
+    unit = models.ForeignKey(
+        'Unit',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tenants"
+    )
+    
+    phone = models.CharField(max_length=30, blank=True)
+    email = models.EmailField(blank=True)
+    
+    # Pre-authorized visitor PINs (hashed) - using JSONField for SQLite compatibility
+    authorized_pins = models.JSONField(default=list, blank=True)
+    
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['unit', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name}{' - ' + self.company if self.company else ''}"
+
