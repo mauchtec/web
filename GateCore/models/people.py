@@ -125,7 +125,6 @@ class Vehicle(BaseModel):
     make = models.CharField(max_length=50, blank=True)
     model = models.CharField(max_length=50, blank=True)
     color = models.CharField(max_length=30, blank=True)
-    colour = models.CharField(max_length=50, blank=True)  # Alternative spelling
     year = models.IntegerField(null=True, blank=True)
     fuel_type = models.CharField(max_length=20, choices=FUEL_TYPES, blank=True)
     registration_number = models.CharField(max_length=50, blank=True)
@@ -136,6 +135,15 @@ class Vehicle(BaseModel):
     # Blocking support
     is_blocked = models.BooleanField(default=False)
     block_reason = models.TextField(blank=True)
+    
+    @property
+    def colour(self):
+        """Alias for color (British spelling)"""
+        return self.color
+    
+    @colour.setter
+    def colour(self, value):
+        self.color = value
     
     class Meta:
         ordering = ['license_plate']

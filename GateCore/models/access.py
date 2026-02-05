@@ -344,8 +344,10 @@ class AccessLog(BaseModel):
     )
     
     # Entry/Exit tracking
-    timestamp = models.DateTimeField(default=timezone.now)  # Keep for backward compatibility
-    entry_time = models.DateTimeField(null=True, blank=True)  # New field
+    # Note: 'timestamp' is kept for backward compatibility with existing code
+    # New code should use entry_time/exit_time for better clarity
+    timestamp = models.DateTimeField(default=timezone.now)  # Deprecated: use entry_time instead
+    entry_time = models.DateTimeField(null=True, blank=True)  # Preferred field for entry time
     exit_time = models.DateTimeField(null=True, blank=True)
     duration_minutes = models.IntegerField(null=True, blank=True)
     
