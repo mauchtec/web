@@ -1003,15 +1003,31 @@ class ButtonCard(HTMLComponentTemplate):
     """
     Action Button Card component.
     
-    Android Instructions:
-    - Action button in card format
-    - Various styles and actions
+    Android/Client Instructions:
+    - Action button in card format with various styles and actions
+    - When action_type is "submit", client should POST form data to:
+      /api/v1/workflow/<workflow_id>/submit/
+    - When action_type is "next", navigate to next step (no server submission)
+    - When action_type is "back", navigate to previous step
+    - When action_type is "cancel", exit workflow
+    - When action_type is "custom" with destination, navigate to destination step
+    
+    Data Submission Format:
+    {
+      "data": {
+        "<step_id_1>": "user_entered_value_1",
+        "<step_id_2>": "user_entered_value_2",
+        ...
+      },
+      "submitted_by": "optional_user_identifier",
+      "session_id": "optional_session_id"
+    }
     
     Props:
-        button_text (str): Button label
-        action_type (str): Button action
-        button_style (str): Visual style
-        destination (str): Destination step ID
+        button_text (str): Button label (e.g., "Save", "Continue", "Submit")
+        action_type (str): Button action - "next", "submit", "back", "cancel", "custom"
+        button_style (str): Visual style - "primary", "secondary", "outline", "danger"
+        destination (str): Destination step ID (used with action_type "custom")
     """
     def __init__(self):
         super().__init__(
