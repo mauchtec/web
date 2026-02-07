@@ -18,3 +18,22 @@ class Workflow(models.Model):
 
 	def __str__(self):
 		return f"{self.name} (v{self.version})"
+
+class WorkflowSubmission(models.Model):
+	"""Store workflow execution data submitted by users"""
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+	workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE, related_name='submissions')
+	submission_data = models.JSONField(help_text='User-entered data from workflow execution')
+	submitted_at = models.DateTimeField(auto_now_add=True)
+	submitted_by = models.CharField(max_length=255, blank=True, help_text='Optional user identifier')
+	session_id = models.CharField(max_length=100, blank=True, help_text='Optional session tracking')
+	
+	class Meta:
+		ordering = ['-submitted_at']
+		indexes = [
+			models.Index(fields=['workflow', '-submitted_at']),
+			models.Index(fields=['submitted_at']),
+		]
+	
+	def __str__(self):
+		return f"Submission for {self.workflow.name} at {self.submitted_at}"
