@@ -58,7 +58,7 @@ Your EnterVehicle workflow JSON defines the structure:
         "type": "button_card",
         "props": {
           "button_text": "save",
-          "action_type": "next"  // Change this to "submit"
+          "action_type": "submit"  // Changed to "submit" to save data
         }
       }
     ]

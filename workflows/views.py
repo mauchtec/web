@@ -145,9 +145,19 @@ def list_workflow_submissions(request, workflow_id):
 	
 	submissions = WorkflowSubmission.objects.filter(workflow=workflow)
 	
-	# Pagination
-	page = int(request.GET.get('page', 1))
-	per_page = min(int(request.GET.get('per_page', 20)), 100)
+	# Pagination with validation
+	try:
+		page = int(request.GET.get('page', 1))
+		per_page = int(request.GET.get('per_page', 20))
+	except (ValueError, TypeError):
+		return Response({"error": "Invalid pagination parameters. 'page' and 'per_page' must be integers."}, status=400)
+	
+	# Validate pagination bounds
+	if page < 1:
+		return Response({"error": "Page number must be >= 1."}, status=400)
+	if per_page < 1 or per_page > 100:
+		return Response({"error": "Per page must be between 1 and 100."}, status=400)
+	
 	start_idx = (page - 1) * per_page
 	end_idx = start_idx + per_page
 	

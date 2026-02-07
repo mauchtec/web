@@ -120,3 +120,27 @@ class WorkflowSubmissionTestCase(APITestCase):
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['page'], 1)
         self.assertEqual(response.data['per_page'], 2)
+    
+    def test_list_workflow_submissions_invalid_pagination(self):
+        """Test validation of invalid pagination parameters"""
+        url = reverse('list_workflow_submissions', args=[self.workflow.id])
+        
+        # Test invalid page number (not an integer)
+        response = self.client.get(url, {'page': 'invalid'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        
+        # Test negative page number
+        response = self.client.get(url, {'page': -1})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        
+        # Test page number of 0
+        response = self.client.get(url, {'page': 0})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        
+        # Test per_page exceeding maximum
+        response = self.client.get(url, {'per_page': 150})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
