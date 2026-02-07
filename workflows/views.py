@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .components import get_all_html_component_templates, generate_workflow_preview, HTML_EXAMPLE_WORKFLOWS
 
-from .models import Workflow
+from .models import Workflow, WorkflowSubmission
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
@@ -103,3 +103,80 @@ def example_workflow(request, key):
 	if not wf:
 		return HttpResponseBadRequest("No such example workflow.")
 	return JsonResponse(wf)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def submit_workflow_data(request, workflow_id):
+	"""Submit workflow execution data (user-entered form data)."""
+	try:
+		workflow = Workflow.objects.get(id=workflow_id)
+	except Workflow.DoesNotExist:
+		return Response({"error": "Workflow not found."}, status=404)
+	
+	submission_data = request.data.get("data")
+	if not submission_data or not isinstance(submission_data, dict):
+		return Response({"error": "Missing or invalid submission data."}, status=400)
+	
+	# Create submission record
+	submission = WorkflowSubmission.objects.create(
+		workflow=workflow,
+		submission_data=submission_data,
+		submitted_by=request.data.get("submitted_by", ""),
+		session_id=request.data.get("session_id", "")
+	)
+	
+	return Response({
+		"id": str(submission.id),
+		"workflow_id": str(workflow.id),
+		"message": "Workflow data submitted successfully.",
+		"submitted_at": submission.submitted_at
+	}, status=201)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def list_workflow_submissions(request, workflow_id):
+	"""List all submissions for a specific workflow."""
+	try:
+		workflow = Workflow.objects.get(id=workflow_id)
+	except Workflow.DoesNotExist:
+		return Response({"error": "Workflow not found."}, status=404)
+	
+	submissions = WorkflowSubmission.objects.filter(workflow=workflow)
+	
+	# Pagination with validation
+	try:
+		page = int(request.GET.get('page', 1))
+		per_page = int(request.GET.get('per_page', 20))
+	except (ValueError, TypeError):
+		return Response({"error": "Invalid pagination parameters. 'page' and 'per_page' must be integers."}, status=400)
+	
+	# Validate pagination bounds
+	if page < 1:
+		return Response({"error": "Page number must be >= 1."}, status=400)
+	if per_page < 1 or per_page > 100:
+		return Response({"error": "Per page must be between 1 and 100."}, status=400)
+	
+	start_idx = (page - 1) * per_page
+	end_idx = start_idx + per_page
+	
+	total_count = submissions.count()
+	submissions_page = submissions[start_idx:end_idx]
+	
+	results = [{
+		"id": str(sub.id),
+		"submission_data": sub.submission_data,
+		"submitted_at": sub.submitted_at,
+		"submitted_by": sub.submitted_by,
+		"session_id": sub.session_id
+	} for sub in submissions_page]
+	
+	return Response({
+		"workflow_id": str(workflow.id),
+		"workflow_name": workflow.name,
+		"total_count": total_count,
+		"page": page,
+		"per_page": per_page,
+		"results": results
+	})
