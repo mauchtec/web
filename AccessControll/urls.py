@@ -34,6 +34,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('api/v1/', include('workflows.urls')),
+    path('api/v1/voip/', include('voip.urls')),
     path('builder/', include('frontend.urls')),
     path('frontend/', include('frontend.urls')),
     path('workflows/', include('frontend.urls_workflows')),
