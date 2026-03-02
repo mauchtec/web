@@ -46,7 +46,7 @@ SECRET_KEY = 'django-insecure-txa=fb43+6i5tus%iwn!vgkg^1*mxl$x90r8dk#rq6%)9wvyl7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.2']
 
 
 # Application definition
@@ -65,7 +65,16 @@ INSTALLED_APPS = [
     'workflows',
     'frontend',
     'GateCore',
+    'voip',
 ]
+
+# Asterisk AMI settings (override in local settings or environment)
+ASTERISK_HOST = 'localhost'
+ASTERISK_AMI_PORT = 5038
+ASTERISK_AMI_USER = 'admin'
+ASTERISK_AMI_SECRET = ''
+ASTERISK_TRUNK = 'SIP/trunk'
+ASTERISK_CONTEXT = 'from-internal'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
