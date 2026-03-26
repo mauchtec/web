@@ -1,0 +1,181 @@
+{% extends "frontend/base.html" %}
+{% block title %}{% if mode == "edit" %}Edit Access Rule{% else %}Create Access Rule{% endif %}{% endblock %}
+{% block head %}
+<style>
+.shell { max-width: 860px; margin: 40px auto; padding: 0 18px; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; box-shadow: 0 10px 30px rgba(15,23,42,.06); overflow: hidden; }
+.hero { padding: 28px 30px; background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%); color: #fff; }
+.hero h1 { margin: 0; font-size: 2rem; font-weight: 800; }
+.hero p { margin: 6px 0 0; opacity: .9; }
+.body { padding: 28px 30px 32px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field label { color: #334155; font-weight: 700; font-size: .92rem; }
+.field input, .field textarea { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: .98rem; }
+.field textarea { min-height: 88px; resize: vertical; }
+.check { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+.actions { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 12px; border: 0; font-weight: 700; cursor: pointer; text-decoration: none; }
+.btn-primary { background: #1d4ed8; color: #fff; }
+.btn-secondary { background: #e2e8f0; color: #0f172a; }
+.loading, .error { margin-top: 18px; padding: 14px 16px; border-radius: 14px; }
+.loading { background: #eff6ff; color: #1d4ed8; }
+.error { background: #fef2f2; color: #991b1b; }
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .hero h1 { font-size: 1.55rem; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="shell">
+  <div class="card">
+    <div class="hero">
+      <h1>{% if mode == "edit" %}Edit Access Rule{% else %}Create Access Rule{% endif %}</h1>
+      <p>Saved live through the API.</p>
+    </div>
+    <div class="body">
+      <form id="rule-form">
+        <div class="grid">
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" required>
+          </div>
+          <div class="field">
+            <label for="location">Location</label>
+            <input id="location" name="location" type="text" required>
+          </div>
+          <div class="field">
+            <label for="group">Group</label>
+            <input id="group" name="group" type="text" placeholder="Optional">
+          </div>
+          <div class="field">
+            <label for="days_of_week">Days of Week</label>
+            <input id="days_of_week" name="days_of_week" type="text" placeholder="Mon,Tue,Wed">
+          </div>
+          <div class="field">
+            <label for="start_time">Start Time</label>
+            <input id="start_time" name="start_time" type="time">
+          </div>
+          <div class="field">
+            <label for="end_time">End Time</label>
+            <input id="end_time" name="end_time" type="time">
+          </div>
+          <div class="check">
+            <input id="is_active" name="is_active" type="checkbox" checked>
+            <label for="is_active">Active</label>
+          </div>
+          <div class="check">
+            <input id="temporary" name="temporary" type="checkbox">
+            <label for="temporary">Temporary</label>
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="expires_at">Expires At</label>
+            <input id="expires_at" name="expires_at" type="datetime-local">
+          </div>
+        </div>
+        <div id="state" class="loading" style="display:none;"></div>
+        <div id="error" class="error" style="display:none;"></div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <a class="btn btn-secondary" href="{{ accessrule_list_url }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const mode = "{{ mode|escapejs }}";
+  const detailUrl = "{{ accessrule_detail_api_url|default:''|escapejs }}";
+  const collectionUrl = "{{ accessrule_api_url|escapejs }}";
+  const listUrl = "{{ accessrule_list_url|escapejs }}";
+  const form = document.getElementById("rule-form");
+  const stateEl = document.getElementById("state");
+  const errorEl = document.getElementById("error");
+
+  function setState(message) {
+    stateEl.textContent = message;
+    stateEl.style.display = "block";
+  }
+
+  function setError(message) {
+    errorEl.textContent = message;
+    errorEl.style.display = "block";
+  }
+
+  function value(id) {
+    return document.getElementById(id).value.trim();
+  }
+
+  function boolValue(id) {
+    return document.getElementById(id).checked;
+  }
+
+  function toPayload() {
+    return {
+      name: value("name"),
+      location: value("location"),
+      group: value("group"),
+      days_of_week: value("days_of_week"),
+      start_time: value("start_time"),
+      end_time: value("end_time"),
+      is_active: boolValue("is_active"),
+      temporary: boolValue("temporary"),
+      expires_at: value("expires_at"),
+    };
+  }
+
+  function populate(rule) {
+    document.getElementById("name").value = rule.name || "";
+    document.getElementById("location").value = rule.location || "";
+    document.getElementById("group").value = rule.group || "";
+    document.getElementById("days_of_week").value = rule.days_of_week || "";
+    document.getElementById("start_time").value = (rule.start_time || "").slice(0, 5);
+    document.getElementById("end_time").value = (rule.end_time || "").slice(0, 5);
+    document.getElementById("is_active").checked = !!rule.is_active;
+    document.getElementById("temporary").checked = !!rule.temporary;
+    document.getElementById("expires_at").value = rule.expires_at ? String(rule.expires_at).slice(0, 16) : "";
+  }
+
+  if (mode === "edit" && detailUrl) {
+    setState("Loading access rule...");
+    fetch(detailUrl, { credentials: "same-origin" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        return response.json();
+      })
+      .then((rule) => {
+        populate(rule);
+        stateEl.style.display = "none";
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load access rule.");
+      });
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorEl.style.display = "none";
+    setState("Saving...");
+    const payload = toPayload();
+    try {
+      const response = await fetch(mode === "edit" ? detailUrl : collectionUrl, {
+        method: mode === "edit" ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.cookie.includes("csrftoken=") ? document.cookie.split("csrftoken=")[1].split(";")[0] : "",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${response.status}`);
+      }
+      window.location.href = listUrl;
+    } catch (err) {
+      setError(err.message || "Failed to save access rule.");
+      stateEl.style.display = "none";
+    }
+  });
+})();
+</script>
+{% endblock %}

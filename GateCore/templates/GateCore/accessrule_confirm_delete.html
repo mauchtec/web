@@ -1,0 +1,86 @@
+{% extends "frontend/base.html" %}
+{% block title %}Delete Access Rule{% endblock %}
+{% block head %}
+<style>
+.shell { max-width: 720px; margin: 40px auto; padding: 0 18px; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; box-shadow: 0 10px 30px rgba(15,23,42,.06); overflow: hidden; }
+.hero { padding: 28px 30px; background: linear-gradient(135deg, #0f172a 0%, #b91c1c 100%); color: #fff; }
+.hero h1 { margin: 0; font-size: 2rem; font-weight: 800; }
+.body { padding: 28px 30px 32px; }
+.actions { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 12px; border: 0; font-weight: 700; cursor: pointer; text-decoration: none; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-secondary { background: #e2e8f0; color: #0f172a; }
+.loading, .error { margin-top: 18px; padding: 14px 16px; border-radius: 14px; }
+.loading { background: #eff6ff; color: #1d4ed8; }
+.error { background: #fef2f2; color: #991b1b; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="shell">
+  <div class="card">
+    <div class="hero">
+      <h1>Delete Access Rule</h1>
+    </div>
+    <div class="body">
+      <div id="state" class="loading">Loading access rule...</div>
+      <div id="error" class="error" style="display:none;"></div>
+      <div id="content" style="display:none;">
+        <p>Are you sure you want to delete <strong id="rule-name"></strong>?</p>
+        <div class="actions">
+          <button id="delete-btn" class="btn btn-danger" type="button">Confirm Delete</button>
+          <a class="btn btn-secondary" href="{{ accessrule_list_url }}">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const detailUrl = "{{ accessrule_detail_api_url|escapejs }}";
+  const listUrl = "{{ accessrule_list_url|escapejs }}";
+  const stateEl = document.getElementById("state");
+  const errorEl = document.getElementById("error");
+  const contentEl = document.getElementById("content");
+  const deleteBtn = document.getElementById("delete-btn");
+
+  function csrfToken() {
+    const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    return match ? match[1] : "";
+  }
+
+  fetch(detailUrl, { credentials: "same-origin" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
+      return response.json();
+    })
+    .then((rule) => {
+      document.getElementById("rule-name").textContent = rule.name || "this access rule";
+      stateEl.style.display = "none";
+      contentEl.style.display = "block";
+    })
+    .catch((err) => {
+      stateEl.style.display = "none";
+      errorEl.textContent = err.message || "Failed to load access rule.";
+      errorEl.style.display = "block";
+    });
+
+  deleteBtn.addEventListener("click", async () => {
+    if (!confirm("Delete this access rule?")) return;
+    try {
+      const response = await fetch(detailUrl, {
+        method: "DELETE",
+        headers: { "X-CSRFToken": csrfToken() },
+        credentials: "same-origin",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || data.error || `HTTP ${response.status}`);
+      window.location.href = listUrl;
+    } catch (err) {
+      errorEl.textContent = err.message || "Failed to delete access rule.";
+      errorEl.style.display = "block";
+    }
+  });
+})();
+</script>
+{% endblock %}

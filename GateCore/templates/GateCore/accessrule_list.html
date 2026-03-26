@@ -1,0 +1,133 @@
+{% extends "frontend/base.html" %}
+{% block title %}Access Rules{% endblock %}
+{% block head %}
+<style>
+.page-shell { max-width: 1280px; margin: 36px auto; padding: 0 18px; }
+.hero { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 20px; }
+.hero h1 { margin: 0; font-size: 2rem; font-weight: 800; color: #0f172a; }
+.hero p { margin: 6px 0 0; color: #64748b; }
+.toolbar { display: flex; gap: 12px; flex-wrap: wrap; }
+.search { min-width: 280px; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 12px; text-decoration: none; font-weight: 700; }
+.btn-primary { background: #1d4ed8; color: #fff; }
+.btn-secondary { background: #e2e8f0; color: #0f172a; }
+.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; padding: 14px 16px; background: #f8fafc; color: #334155; }
+tbody td { padding: 14px 16px; border-top: 1px solid #e2e8f0; }
+tbody tr:hover { background: #f8fafc; }
+.link { color: #1d4ed8; font-weight: 700; text-decoration: none; }
+.badge { display: inline-flex; padding: 5px 10px; border-radius: 999px; background: #e2e8f0; color: #0f172a; font-size: .84rem; font-weight: 700; }
+.loading, .error, .empty { padding: 22px 18px; text-align: center; }
+.loading { background: #eff6ff; color: #1d4ed8; }
+.error { background: #fef2f2; color: #991b1b; }
+.empty { color: #64748b; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.small-btn { border: 0; border-radius: 10px; padding: 8px 10px; cursor: pointer; font-weight: 700; }
+.small-open { background: #dbeafe; color: #1d4ed8; }
+.small-edit { background: #e0e7ff; color: #4338ca; }
+.small-delete { background: #fee2e2; color: #b91c1b; }
+@media (max-width: 720px) { .hero { flex-direction: column; align-items: start; } .search { min-width: 0; width: 100%; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-shell">
+  <div class="hero">
+    <div>
+      <h1>Access Rules</h1>
+      <p>These records now come from the API used by the residence app.</p>
+    </div>
+    <div class="toolbar">
+      <input id="search" class="search" type="search" placeholder="Search access rules">
+      <a class="btn btn-primary" href="{{ accessrule_create_url }}">Create Rule</a>
+    </div>
+  </div>
+  <div class="table-card">
+    <div id="state" class="loading">Loading access rules from API...</div>
+    <div style="overflow-x:auto; display:none;" id="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Group</th>
+            <th>Days</th>
+            <th>Status</th>
+            <th>Expires</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const apiUrl = "{{ accessrule_api_url|escapejs }}";
+  const rowsEl = document.getElementById("rows");
+  const stateEl = document.getElementById("state");
+  const tableWrap = document.getElementById("table-wrap");
+  const searchEl = document.getElementById("search");
+  let rules = [];
+
+  const toList = (payload) => Array.isArray(payload?.results) ? payload.results : (Array.isArray(payload) ? payload : []);
+
+  function render(items) {
+    rowsEl.innerHTML = "";
+    if (!items.length) {
+      rowsEl.innerHTML = '<tr><td colspan="7" class="empty">No access rules found.</td></tr>';
+      return;
+    }
+    items.forEach((rule) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><a class="link" href="/gatecore/accessrules/${rule.id}/edit/">${rule.name || "-"}</a></td>
+        <td>${rule.location || "-"}</td>
+        <td>${rule.group || "-"}</td>
+        <td>${rule.days_of_week || "-"}</td>
+        <td><span class="badge">${rule.is_active ? "Active" : "Inactive"}</span></td>
+        <td>${rule.expires_at_display || rule.expires_at || "-"}</td>
+        <td>
+          <div class="actions">
+            <a class="small-btn small-open" href="/gatecore/accessrules/${rule.id}/edit/">Edit</a>
+            <a class="small-btn small-delete" href="/gatecore/accessrules/${rule.id}/delete/">Delete</a>
+          </div>
+        </td>
+      `;
+      rowsEl.appendChild(tr);
+    });
+  }
+
+  function applyFilter() {
+    const q = (searchEl.value || "").trim().toLowerCase();
+    const filtered = rules.filter((rule) => !q || [
+      rule.name,
+      rule.location,
+      rule.group,
+      rule.days_of_week,
+      rule.expires_at_display,
+    ].join(" ").toLowerCase().includes(q));
+    render(filtered);
+  }
+
+  fetch(apiUrl, { credentials: "same-origin" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
+      return response.json();
+    })
+    .then((data) => {
+      rules = toList(data);
+      stateEl.style.display = "none";
+      tableWrap.style.display = "block";
+      applyFilter();
+    })
+    .catch((err) => {
+      stateEl.className = "error";
+      stateEl.textContent = err.message || "Failed to load access rules.";
+    });
+
+  searchEl.addEventListener("input", applyFilter);
+})();
+</script>
+{% endblock %}

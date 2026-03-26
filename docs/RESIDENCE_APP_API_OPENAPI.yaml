@@ -1,0 +1,1228 @@
+openapi: 3.0.3
+info:
+  title: GateCore Residence App API
+  version: "1.0.0"
+  description: Stable API contract for the residence app and other API clients.
+servers:
+  - url: /
+security:
+  - TokenAuth: []
+paths:
+  /api/gatecore/mobile/login/request-otp/:
+    post:
+      summary: Request OTP for mobile login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone: {type: string}
+      responses:
+        "200":
+          description: OTP response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  phone: {type: string}
+                  otp_sent: {type: boolean}
+                  expires_in: {type: integer}
+                  memberships:
+                    type: array
+                    items: {$ref: "#/components/schemas/MembershipChoice"}
+                  otp: {type: string}
+  /api/gatecore/mobile/login/verify-otp/:
+    post:
+      summary: Verify OTP and issue token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, membership_id, otp]
+              properties:
+                phone: {type: string}
+                membership_id: {type: string, format: uuid}
+                otp: {type: string}
+                device_id: {type: string}
+                device_name: {type: string}
+                device_model: {type: string}
+                device_serial: {type: string}
+                device_os: {type: string}
+                device_app_version: {type: string}
+                device_info: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Token payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+  /api/gatecore/dashboard/summary/:
+    get:
+      summary: Dashboard summary cards
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DashboardSummary"}
+  /api/gatecore/sites/overview/:
+    get:
+      summary: List sites
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SiteCollection"}
+  /api/gatecore/details/sites/{site_id}/:
+    get:
+      summary: Site detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidSiteId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SiteRow"}
+  /api/gatecore/people/overview/:
+    get:
+      summary: List people
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PersonCollection"}
+  /api/gatecore/details/people/{person_id}/:
+    get:
+      summary: Person detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidPersonId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PersonRow"}
+  /api/gatecore/units/overview/:
+    get:
+      summary: List units
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/UnitCollection"}
+  /api/gatecore/details/units/{unit_id}/:
+    get:
+      summary: Unit detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidUnitId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/UnitRow"}
+  /api/gatecore/vehicles/overview/:
+    get:
+      summary: List vehicles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/VehicleCollection"}
+  /api/gatecore/details/vehicles/{vehicle_id}/:
+    get:
+      summary: Vehicle detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidVehicleId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/VehicleRow"}
+  /api/gatecore/access-logs/overview/:
+    get:
+      summary: List access logs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccessLogCollection"}
+  /api/gatecore/access-logs/{log_id}/detail/:
+    get:
+      summary: Access log detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidLogId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccessLogRow"}
+  /api/gatecore/reports/overview/:
+    get:
+      summary: List report rows
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ReportCollection"}
+  /api/gatecore/bookings/overview/:
+    get:
+      summary: List resident bookings
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BookingCollection"}
+  /api/gatecore/bookings/create/:
+    post:
+      summary: Create a resident booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/BookingCreateRequest"}
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BookingDetailResponse"}
+  /api/gatecore/bookings/{booking_id}/detail/:
+    get:
+      summary: Resident booking detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidBookingId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BookingDetailResponse"}
+  /api/gatecore/bookings/{booking_id}/cancel/:
+    post:
+      summary: Cancel a resident booking
+      parameters:
+        - {$ref: "#/components/parameters/uuidBookingId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BookingDetailResponse"}
+  /api/gatecore/schedule-rules/:
+    get:
+      summary: List schedule rules
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ScheduleRuleRow"}
+    post:
+      summary: Create schedule rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ScheduleRuleCreateRequest"}
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ScheduleRuleRow"}
+  /api/gatecore/schedule-rules/{schedule_rule_id}/:
+    get:
+      summary: Schedule rule detail
+      parameters:
+        - {$ref: "#/components/parameters/uuidScheduleRuleId"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ScheduleRuleRow"}
+  /api/gatecore/driver-licenses/overview/:
+    get:
+      summary: List driver license rows
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DriverLicenseCollection"}
+  /api/gatecore/sms-logs/overview/:
+    get:
+      summary: List SMS logs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SmsLogCollection"}
+  /api/gatecore/access-credentials/overview/:
+    get:
+      summary: List access credentials
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CredentialCollection"}
+  /api/gatecore/access-permissions/overview/:
+    get:
+      summary: List access permissions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PermissionCollection"}
+  /api/gatecore/guest-registrations/overview/:
+    get:
+      summary: List guest registrations
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GuestCollection"}
+  /api/gatecore/blacklist/overview/:
+    get:
+      summary: List blacklist entries
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BlacklistCollection"}
+  /api/gatecore/accessrules/:
+    get:
+      summary: List access rules
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccessRuleCollection"}
+    post:
+      summary: Create access rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AccessRuleWrite"}
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccessRuleRow"}
+  /api/gatecore/accessrules/{pk}/:
+    get:
+      summary: Access rule detail
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccessRuleRow"}
+    put:
+      summary: Update access rule
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema: {type: integer}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AccessRuleWrite"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccessRuleRow"}
+    delete:
+      summary: Delete access rule
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: {type: string}
+  /api/gatecore/settings/api/:
+    get:
+      summary: Get runtime settings
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RuntimeSettings"}
+    put:
+      summary: Update runtime settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RuntimeSettings"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RuntimeSettings"}
+  /api/gatecore/mutations/add-unit/:
+    post:
+      summary: Create a unit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AddUnitRequest"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/UnitMutationResponse"}
+  /api/gatecore/mutations/update-unit/{unit_id}/:
+    post:
+      summary: Update a unit
+      parameters:
+        - {$ref: "#/components/parameters/uuidUnitId"}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AddUnitRequest"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/UnitMutationResponse"}
+  /api/gatecore/mutations/add-person/:
+    post:
+      summary: Create a person and link to a unit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AddPersonRequest"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PersonMutationResponse"}
+  /api/gatecore/mutations/update-person/{person_id}/:
+    post:
+      summary: Update a person
+      parameters:
+        - {$ref: "#/components/parameters/uuidPersonId"}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AddPersonRequest"}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PersonMutationResponse"}
+  /api/gatecore/mutations/link-person-to-unit/:
+    post:
+      summary: Link a person to a unit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [person_id, unit_id]
+              properties:
+                person_id: {type: string, format: uuid}
+                unit_id: {type: string, format: uuid}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+  /api/gatecore/mutations/reallocate-person/:
+    post:
+      summary: Reallocate a person to another unit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [person_id]
+              properties:
+                person_id: {type: string, format: uuid}
+                new_unit_id: {type: string, format: uuid}
+                unit_id: {type: string, format: uuid}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+  /api/gatecore/system-preclearance/:
+    get:
+      summary: Get system preclearance QR config
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SystemPreclearance"}
+    post:
+      summary: Rotate system preclearance QR config
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SystemPreclearance"}
+  /api/gatecore/android-active-pins/:
+    get:
+      summary: List active pins
+      security: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ActivePinCollection"}
+components:
+  securitySchemes:
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: "Send `Authorization: Token <key>`."
+  parameters:
+    uuidSiteId:
+      name: site_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    uuidPersonId:
+      name: person_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    uuidUnitId:
+      name: unit_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    uuidVehicleId:
+      name: vehicle_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    uuidLogId:
+      name: log_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    uuidBookingId:
+      name: booking_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    uuidScheduleRuleId:
+      name: schedule_rule_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+  schemas:
+    ErrorDetail:
+      type: object
+      properties:
+        detail: {type: string}
+        error: {type: string}
+    MembershipChoice:
+      type: object
+      properties:
+        membership_id: {type: string, format: uuid}
+        person_id: {type: string, format: uuid}
+        site_id: {type: string, format: uuid}
+        site_name: {type: string}
+        property_id: {type: string, format: uuid}
+        property_name: {type: string}
+        unit_id: {type: string, format: uuid}
+        unit_code: {type: string}
+        role: {type: string}
+    TokenResponse:
+      type: object
+      properties:
+        token: {type: string}
+        site: {$ref: "#/components/schemas/SiteRef"}
+        person: {$ref: "#/components/schemas/PersonRef"}
+        unit: {$ref: "#/components/schemas/UnitRef"}
+        capabilities:
+          type: object
+          additionalProperties: {type: boolean}
+    DashboardSummary:
+      type: object
+      properties:
+        generated_at:
+          oneOf: [{type: string}, {type: "null"}]
+        cards:
+          type: array
+          items: {$ref: "#/components/schemas/DashboardCard"}
+        totals:
+          type: object
+          additionalProperties: {type: integer}
+    DashboardCard:
+      type: object
+      properties:
+        key: {type: string}
+        label: {type: string}
+        count: {type: integer}
+        description: {type: string}
+        icon: {type: string}
+        href: {type: string}
+    SiteRef:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        code: {type: string}
+    PersonRef:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        full_name: {type: string}
+        phone: {type: string}
+    UnitRef:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        unit_code: {type: string}
+        permissions: {type: string}
+    SiteRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        site_type: {type: string}
+        type_display: {type: string}
+        location: {type: string}
+        code: {type: string}
+        description: {type: string}
+        is_active: {type: boolean}
+    SiteCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/SiteRow"}
+        sites:
+          type: array
+          items: {$ref: "#/components/schemas/SiteRow"}
+        site_type_options:
+          type: array
+          items:
+            type: object
+            properties:
+              value: {type: string}
+              label: {type: string}
+    PersonRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        full_name: {type: string}
+        id_number: {type: string}
+        phone: {type: string}
+        email: {type: string}
+        residences: {type: string}
+        detail_url: {type: string}
+    PersonCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/PersonRow"}
+        people:
+          type: array
+          items: {$ref: "#/components/schemas/PersonRow"}
+    UnitRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        unit_code: {type: string}
+        unit_type: {type: string}
+        unit_type_display: {type: string}
+        property_id: {type: string, format: uuid}
+        property_name: {type: string}
+        site_name: {type: string}
+        floor: {type: string}
+        status: {type: string}
+        status_display: {type: string}
+        area_sqft: {type: string}
+        detail_url: {type: string}
+    UnitCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/UnitRow"}
+        units:
+          type: array
+          items: {$ref: "#/components/schemas/UnitRow"}
+    VehicleRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        plate_number: {type: string}
+        record_type: {type: string}
+        register_number: {type: string}
+        disk_number: {type: string}
+        expiry_date: {type: string}
+        vehicle_type: {type: string}
+        make: {type: string}
+        model: {type: string}
+        colour: {type: string}
+        vin: {type: string}
+        engine_number: {type: string}
+        status: {type: string}
+        detail_url: {type: string}
+    VehicleCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/VehicleRow"}
+        vehicle_logs:
+          type: array
+          items: {$ref: "#/components/schemas/VehicleRow"}
+        column_defs:
+          type: array
+          items:
+            type: object
+            properties:
+              key: {type: string}
+              label: {type: string}
+              visible: {type: boolean}
+              type: {type: string}
+    AccessLogRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        timestamp: {type: string}
+        timestamp_display: {type: string}
+        access_point:
+          type: object
+          properties:
+            id: {type: string}
+            name: {type: string}
+        person:
+          type: object
+          properties:
+            id: {type: string}
+            full_name: {type: string}
+        credential:
+          type: object
+          properties:
+            id: {type: string}
+            value: {type: string}
+        result: {type: string}
+        result_display: {type: string}
+        reason: {type: string}
+        session_id: {type: string}
+        detail_url: {type: string}
+        report_url: {type: string}
+        pdf_url: {type: string}
+        component_items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: string}
+              type: {type: string}
+              label: {type: string}
+              value: {type: string}
+    AccessLogCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/AccessLogRow"}
+        logs:
+          type: array
+          items: {$ref: "#/components/schemas/AccessLogRow"}
+        component_keys:
+          type: array
+          items: {type: string}
+    ReportRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        timestamp: {type: string}
+        workflow_name: {type: string}
+        direction: {type: string}
+        access_point: {type: string}
+        result: {type: string}
+        pin_code: {type: string}
+        pin_source: {type: string}
+        recording_url: {type: string}
+        id_number: {type: string}
+        gender: {type: string}
+        full_name: {type: string}
+        visitor_phone_number: {type: string}
+        destination_residence: {type: string}
+        vehicle_plate: {type: string}
+        trailer: {type: string}
+        vehicle_make_model: {type: string}
+        vehicle_color: {type: string}
+        company_selection: {type: string}
+        workflow_id: {type: string}
+        workflow_version: {type: string}
+        scan_type: {type: string}
+        person_name: {type: string}
+        credential: {type: string}
+        log_url: {type: string}
+    ReportCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/ReportRow"}
+        logs:
+          type: array
+          items: {$ref: "#/components/schemas/ReportRow"}
+        column_defs:
+          type: array
+          items:
+            type: object
+            properties:
+              key: {type: string}
+              label: {type: string}
+              visible: {type: boolean}
+              type: {type: string}
+    BookingRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        booking_kind:
+          type: string
+          enum: [invite_contact, invite_phone, future_booking, delivery_collection, group_booking]
+        host:
+          type: object
+          properties:
+            id: {type: string}
+            full_name: {type: string}
+        guest_person:
+          type: object
+          properties:
+            id: {type: string}
+            full_name: {type: string}
+            phone: {type: string}
+        unit:
+          type: object
+          properties:
+            id: {type: string}
+            unit_code: {type: string}
+        vehicle:
+          type: object
+          properties:
+            id: {type: string}
+            license_plate: {type: string}
+        expected_arrival: {type: string}
+        expected_arrival_display: {type: string}
+        expected_departure: {type: string}
+        expected_departure_display: {type: string}
+        actual_arrival: {type: string}
+        actual_arrival_display: {type: string}
+        actual_departure: {type: string}
+        actual_departure_display: {type: string}
+        purpose: {type: string}
+        notes: {type: string}
+        status: {type: string}
+        status_display: {type: string}
+        approved_by: {type: string}
+        approved_at: {type: string}
+        approved_at_display: {type: string}
+        temporary_pin: {type: string}
+        pin_expires_at: {type: string}
+        pin_expires_at_display: {type: string}
+        detail_url: {type: string}
+    BookingCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/BookingRow"}
+        bookings:
+          type: array
+          items: {$ref: "#/components/schemas/BookingRow"}
+    BookingDetailResponse:
+      type: object
+      properties:
+        booking: {$ref: "#/components/schemas/BookingRow"}
+    BookingCreateRequest:
+      type: object
+      required: [booking_kind, guest_name]
+      properties:
+        booking_kind:
+          type: string
+          enum: [invite_contact, invite_phone, future_booking, delivery_collection]
+        guest_name: {type: string}
+        guest_phone: {type: string}
+        end_date: {type: string, format: date}
+        purpose: {type: string}
+        notes: {type: string}
+    DriverLicenseRow:
+      type: object
+      properties:
+        id_number: {type: string}
+        license_number: {type: string}
+        driver_license_id: {type: string}
+        surname: {type: string}
+        initials: {type: string}
+        birthdate: {type: string}
+        gender: {type: string}
+        license_issue_date: {type: string}
+        license_expiry_date: {type: string}
+        status: {type: string}
+        timestamp: {type: string}
+    DriverLicenseCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/DriverLicenseRow"}
+        column_defs:
+          type: array
+          items:
+            type: object
+            properties:
+              key: {type: string}
+              label: {type: string}
+              visible: {type: boolean}
+              type: {type: string}
+    SmsLogRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        created_at: {type: string}
+        created_at_display: {type: string}
+        status: {type: string}
+        status_display: {type: string}
+        provider: {type: string}
+        trigger: {type: string}
+        unit: {$ref: "#/components/schemas/UnitRef"}
+        person: {$ref: "#/components/schemas/PersonRef"}
+        visitor_name: {type: string}
+        visitor_phone: {type: string}
+        recipient_phone: {type: string}
+        message: {type: string}
+        provider_message_id: {type: string}
+        error_message: {type: string}
+        completed_at: {type: string}
+        completed_at_display: {type: string}
+    SmsLogCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/SmsLogRow"}
+        sms_logs:
+          type: array
+          items: {$ref: "#/components/schemas/SmsLogRow"}
+    CredentialRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        credential_value: {type: string}
+        credential_type: {type: string}
+        credential_type_display: {type: string}
+        person: {$ref: "#/components/schemas/PersonRef"}
+        is_active: {type: boolean}
+        is_deleted: {type: boolean}
+        status_label: {type: string}
+        detail_url: {type: string}
+    CredentialCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/CredentialRow"}
+        credentials:
+          type: array
+          items: {$ref: "#/components/schemas/CredentialRow"}
+    PermissionRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        person: {$ref: "#/components/schemas/PersonRef"}
+        access_point: {$ref: "#/components/schemas/AccessPointRef"}
+        schedule_rule: {$ref: "#/components/schemas/ScheduleRuleRef"}
+        schedule_display: {type: string}
+        status_label: {type: string}
+        detail_url: {type: string}
+    PermissionCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/PermissionRow"}
+        permissions:
+          type: array
+          items: {$ref: "#/components/schemas/PermissionRow"}
+    GuestRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        guest_name: {type: string}
+        person: {$ref: "#/components/schemas/PersonRef"}
+        unit: {$ref: "#/components/schemas/UnitRef"}
+        expected_arrival: {type: string}
+        expected_departure: {type: string}
+        expected_arrival_display: {type: string}
+        expected_departure_display: {type: string}
+        status: {type: string}
+        status_display: {type: string}
+        detail_url: {type: string}
+    GuestCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/GuestRow"}
+        guests:
+          type: array
+          items: {$ref: "#/components/schemas/GuestRow"}
+    BlacklistRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        person: {$ref: "#/components/schemas/PersonRef"}
+        vehicle:
+          type: object
+          properties:
+            id: {type: string, format: uuid}
+            license_plate: {type: string}
+        credential:
+          type: object
+          properties:
+            id: {type: string, format: uuid}
+            credential_value: {type: string}
+        target_type: {type: string}
+        target_type_display: {type: string}
+        reason: {type: string}
+        reason_display: {type: string}
+        details: {type: string}
+        blacklisted_from: {type: string}
+        blacklisted_from_display: {type: string}
+        blacklisted_until: {type: string}
+        blacklisted_until_display: {type: string}
+        detail_url: {type: string}
+    BlacklistCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/BlacklistRow"}
+        blacklist:
+          type: array
+          items: {$ref: "#/components/schemas/BlacklistRow"}
+    AccessRuleRow:
+      type: object
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        group: {type: string}
+        location: {type: string}
+        start_time: {type: string}
+        end_time: {type: string}
+        days_of_week: {type: string}
+        is_active: {type: boolean}
+        temporary: {type: boolean}
+        expires_at: {type: string}
+        expires_at_display: {type: string}
+    AccessRuleWrite:
+      type: object
+      required: [name, location]
+      properties:
+        name: {type: string}
+        group: {type: string}
+        location: {type: string}
+        start_time: {type: string}
+        end_time: {type: string}
+        days_of_week: {type: string}
+        is_active: {type: boolean}
+        temporary: {type: boolean}
+        expires_at: {type: string, format: date-time}
+    AccessRuleCollection:
+      type: object
+      properties:
+        rows:
+          type: array
+          items: {$ref: "#/components/schemas/AccessRuleRow"}
+        results:
+          type: array
+          items: {$ref: "#/components/schemas/AccessRuleRow"}
+    RuntimeSettings:
+      type: object
+      properties:
+        pin_length: {type: integer}
+        allow_sip_calls: {type: boolean}
+        send_visitor_sms: {type: boolean}
+        send_visitor_sms_otp: {type: boolean}
+        send_visitor_sms_exitcode: {type: boolean}
+        anti_passback_enabled: {type: boolean}
+        anti_passback_window_hours: {type: integer}
+        anti_passback_no_reentry_without_exit: {type: boolean}
+        anti_passback_allow_manual_override: {type: boolean}
+        anti_passback_override_comment_required: {type: boolean}
+        anti_passback_warning_message: {type: string}
+    AddUnitRequest:
+      type: object
+      required: [site, property, unit_code]
+      properties:
+        site: {type: string}
+        property: {type: string}
+        unit_code: {type: string}
+        unit_type: {type: string}
+        status: {type: string}
+        permissions: {type: string}
+        is_active: {type: boolean}
+    AddPersonRequest:
+      type: object
+      properties:
+        unit_id: {type: string, format: uuid}
+        unit: {type: string, format: uuid}
+        full_name: {type: string}
+        id_number: {type: string}
+        phone: {type: string}
+        phone_device_type: {type: string}
+        phone_otp: {type: string}
+        facial_recognition_enabled: {type: string}
+        email: {type: string}
+        date_of_birth: {type: string}
+        emergency_contact: {type: string}
+        tags: {type: string}
+        start_date: {type: string}
+        role: {type: string}
+        device_identifier: {type: string}
+        device_name: {type: string}
+        device_model: {type: string}
+        device_serial_number: {type: string}
+        device_os: {type: string}
+        device_app_version: {type: string}
+    UnitMutationResponse:
+      type: object
+      properties:
+        success: {type: boolean}
+        unit: {$ref: "#/components/schemas/UnitRow"}
+    PersonMutationResponse:
+      type: object
+      properties:
+        success: {type: boolean}
+        person_id: {type: string, format: uuid}
+        person: {$ref: "#/components/schemas/PersonRow"}
+    SystemPreclearance:
+      type: object
+      properties:
+        key: {type: string}
+        qr_base64: {type: string}
+        payload: {type: object, additionalProperties: true}
+        trigger_payload: {type: object, additionalProperties: true}
+        last_rotated: {type: string}
+        trigger_endpoint: {type: string}
+    ActivePinCollection:
+      type: object
+      properties:
+        pins:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: integer}
+              name: {type: string}
+              pin: {type: string}
+              valid_from: {type: string}
+              valid_until: {type: string}
+              visitor_full_name: {type: string}
+              visitor_mobile: {type: string}
+              unit: {type: string}
+              unit_code: {type: string}
+              resident: {type: string}
+              resident_name: {type: string}
+              created_by: {type: string}
+              entry_used: {type: boolean}
+              schedule_kind: {type: string}
+    ScheduleRuleRow:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        unit:
+          type: object
+          properties:
+            id: {type: string, format: uuid}
+            unit_code: {type: string}
+        visitor_full_name: {type: string}
+        visitor_mobile: {type: string}
+        schedule_type: {type: string}
+        schedule_kind: {type: string}
+        start_time: {type: string}
+        end_time: {type: string}
+        reason: {type: string}
+        reason_other: {type: string}
+        pin: {type: string}
+        valid_from: {type: string}
+        valid_until: {type: string}
+        days_allowed: {type: string}
+        monday: {type: boolean}
+        tuesday: {type: boolean}
+        wednesday: {type: boolean}
+        thursday: {type: boolean}
+        friday: {type: boolean}
+        saturday: {type: boolean}
+        sunday: {type: boolean}
+        notes: {type: string}
+        exclude_holidays: {type: boolean}
+        notify_resident: {type: boolean}
+        is_active: {type: boolean}
+        preclearance_entry_used: {type: boolean}
+    ScheduleRuleCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+        schedule_type: {type: string}
+        schedule_kind: {type: string}
+        start_time: {type: string}
+        end_time: {type: string}
+        reason: {type: string}
+        reason_other: {type: string}
+        visitor_full_name: {type: string}
+        visitor_mobile: {type: string}
+        pin: {type: string}
+        valid_from: {type: string}
+        valid_until: {type: string}
+        days_allowed: {type: string}
+        monday: {type: boolean}
+        tuesday: {type: boolean}
+        wednesday: {type: boolean}
+        thursday: {type: boolean}
+        friday: {type: boolean}
+        saturday: {type: boolean}
+        sunday: {type: boolean}
+        notes: {type: string}
+        exclude_holidays: {type: boolean}
+        notify_resident: {type: boolean}
+        is_active: {type: boolean}
+        unit: {type: string, format: uuid}
+        visitor: {type: string, format: uuid}
